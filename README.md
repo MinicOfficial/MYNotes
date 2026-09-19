@@ -1,1 +1,1 @@
-# MYNotes
+# MYNotes, kişilerin mahremiyetini önemseyemseyen bir not alma ve not tutma uygulamasıdır. Apache 2.0 lisansı içermektedir. Version: 1.0.0 - Versiyon: 1.0.0
