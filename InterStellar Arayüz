@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StarStellar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080B14; --bg2:#0D1220; --panel:#121A2E; --panel2:#0F1626;
+    --border:#26365C; --border-soft:#1B2745;
+    --accent:#FFC857; --accent-dim:#C99A3D; --accent-ink:#251A02;
+    --crew:#5EC8F2; --imp:#E6484B;
+    --text:#EAF2FF; --muted:#8996B3;
+    --ok:#3ED598;
+    --radius: 14px;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root:not([data-theme="light"]){
+    --bg:#080B14; --panel:#121A2E; --text:#EAF2FF;
+  }
+  :root[data-theme="dark"]{
+    --bg:#080B14; --panel:#121A2E; --text:#EAF2FF;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%; margin:0; background:var(--bg); color:var(--text);
+    font-family:'Rubik',system-ui,sans-serif; overflow:hidden;
+    -webkit-tap-highlight-color: transparent; user-select:none;
+  }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  h1,h2,h3, .display{ font-family:'Orbitron', sans-serif; letter-spacing:0.02em; }
+  #app{ position:fixed; inset:0; }
+  .screen{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    padding: 24px 16px;
+    background:
+      radial-gradient(1100px 700px at 18% -10%, #16224a55, transparent 60%),
+      radial-gradient(900px 600px at 100% 110%, #0d2a3055, transparent 60%),
+      var(--bg);
+  }
+  .screen.active{ display:flex; }
+  .stars-bg{ position:absolute; inset:0; pointer-events:none; opacity:.55; }
+
+  /* ---------- START SCREEN ---------- */
+  #screen-start .logo-wrap{ text-align:center; margin-bottom:46px; }
+  #screen-start h1{
+    font-size: clamp(2.6rem, 9vw, 4.6rem); margin:0; font-weight:900;
+    color: var(--text);
+    text-shadow: 0 0 26px #FFC85766, 0 0 2px #fff;
+    letter-spacing: 0.06em;
+  }
+  #screen-start h1 span{ color: var(--accent); }
+  #screen-start .tagline{ color:var(--muted); margin-top:10px; font-size:.95rem; letter-spacing:.08em; }
+  .btn-primary{
+    font-family:'Orbitron',sans-serif; font-weight:700; font-size:1.05rem;
+    background: linear-gradient(180deg, #FFD874, var(--accent));
+    color: var(--accent-ink); border:none; border-radius: 10px;
+    padding: 18px 44px; cursor:pointer; letter-spacing:.06em;
+    box-shadow: 0 6px 0 var(--accent-dim), 0 10px 24px #FFC85744;
+    transition: transform .08s ease;
+  }
+  .btn-primary:active{ transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-dim); }
+  .btn-ghost{
+    font-family:'Rubik',sans-serif; font-weight:600; background:transparent;
+    color:var(--muted); border:1px solid var(--border); border-radius:10px;
+    padding:12px 22px; cursor:pointer;
+  }
+  .btn-ghost:hover{ color:var(--text); border-color: var(--accent-dim); }
+
+  /* ---------- PANEL ---------- */
+  .panel{
+    width:100%; max-width:560px; background:var(--panel);
+    border:1px solid var(--border); border-radius: var(--radius);
+    padding: 26px 24px; box-shadow: 0 20px 50px #00000066;
+  }
+  .panel h2{ margin:0 0 4px; font-size:1.3rem; }
+  .panel .sub{ color:var(--muted); font-size:.85rem; margin-bottom:20px; }
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:.78rem; color:var(--muted); margin-bottom:8px; letter-spacing:.04em; }
+  .pills{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pill{
+    padding:9px 16px; border-radius:999px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); cursor:pointer; font-size:.9rem;
+    font-weight:500; transition: all .1s ease;
+  }
+  .pill:hover{ border-color:var(--accent-dim); }
+  .pill.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:700; }
+  .pill.locked{ cursor:default; }
+  .row-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
+
+  /* ---------- WAITING / CUSTOMIZE ---------- */
+  #screen-waiting .customize-wrap{
+    display:flex; gap:28px; width:100%; max-width:920px; align-items:flex-start;
+    flex-wrap:wrap; justify-content:center;
+  }
+  .preview-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px; text-align:center; width:230px; flex-shrink:0;
+  }
+  .preview-card canvas{ background:radial-gradient(circle at 50% 35%, #1c2947, #0c1120); border-radius:10px; }
+  .preview-name{ margin-top:10px; font-weight:700; font-family:'Orbitron',sans-serif; font-size:.95rem; }
+  .cust-panel{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px; flex:1; min-width:300px; max-width:560px;
+  }
+  .swatches{ display:grid; grid-template-columns:repeat(8,1fr); gap:8px; }
+  .swatch{
+    width:100%; aspect-ratio:1; border-radius:8px; cursor:pointer;
+    border:2px solid transparent; position:relative;
+  }
+  .swatch.active{ border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
+  .opt-scroll{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+  .opt-scroll .pill{ white-space:nowrap; }
+  .name-input{
+    width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); font-size:.95rem; font-family:'Rubik',sans-serif;
+  }
+  .name-input:focus{ outline:none; border-color:var(--accent); }
+
+  /* ---------- ROLE SCREEN ---------- */
+  #screen-role .role-card{ text-align:center; }
+  #screen-role .role-label{ color:var(--muted); font-size:.9rem; letter-spacing:.14em; margin-bottom:14px; }
+  #screen-role .role-name{ font-size: clamp(2rem,8vw,3.4rem); font-weight:900; margin:0 0 18px; }
+  #screen-role .role-name.crew{ color:var(--crew); text-shadow:0 0 30px #5EC8F266; }
+  #screen-role .role-name.imp{ color:var(--imp); text-shadow:0 0 30px #E6484B66; }
+  #screen-role .role-desc{ color:var(--muted); max-width:420px; margin:0 auto 26px; line-height:1.5; font-size:.92rem; }
+
+  /* ---------- GAME SCREEN ---------- */
+  #screen-game{ padding:0; }
+  #gameCanvas{ display:block; width:100%; height:100%; background:#04060c; touch-action:none; }
+  .hud{ position:absolute; inset:0; pointer-events:none; }
+  .hud > *{ pointer-events:auto; }
+  .hud-top{
+    position:absolute; top: calc(14px + env(safe-area-inset-top,0px)); left:14px; right:14px;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+    pointer-events:none;
+  }
+  .chip{
+    background:#0D1220cc; border:1px solid var(--border); border-radius:10px;
+    padding:8px 12px; font-size:.78rem; backdrop-filter: blur(6px);
+  }
+  .chip.role-crew{ color:var(--crew); border-color:#5EC8F255; }
+  .chip.role-imp{ color:var(--imp); border-color:#E6484B55; }
+  .chip .room-name{ font-family:'Orbitron',sans-serif; font-weight:700; font-size:.85rem; color:var(--text); }
+  #promptChip{
+    position:absolute; left:50%; bottom: calc(160px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%);
+    background:#FFC857; color:var(--accent-ink); font-weight:700; font-size:.85rem;
+    padding:9px 16px; border-radius:999px; display:none; white-space:nowrap;
+    box-shadow:0 8px 18px #00000055;
+  }
+  .dpad{
+    position:absolute; left: calc(18px + env(safe-area-inset-left,0px)); bottom: calc(18px + env(safe-area-inset-bottom,0px));
+    width:150px; height:150px;
+  }
+  .dpad button{
+    position:absolute; width:50px; height:50px; border-radius:12px; border:1px solid var(--border);
+    background:#0D1220cc; color:var(--text); font-size:1.2rem; backdrop-filter: blur(6px);
+  }
+  .dpad button:active{ background:var(--accent); color:var(--accent-ink); }
+  .dpad .up{ top:0; left:50px; } .dpad .down{ bottom:0; left:50px; }
+  .dpad .left{ top:50px; left:0; } .dpad .right{ top:50px; right:0; }
+  .action-cluster{
+    position:absolute; right: calc(18px + env(safe-area-inset-right,0px)); bottom: calc(18px + env(safe-area-inset-bottom,0px));
+    display:flex; flex-direction:column; gap:12px; align-items:flex-end;
+  }
+  .round-btn{
+    width:74px; height:74px; border-radius:50%; border:2px solid var(--border);
+    background:#0D1220dd; color:var(--text); font-family:'Orbitron',sans-serif; font-weight:700;
+    font-size:.78rem; backdrop-filter: blur(6px);
+  }
+  .round-btn.interact{ border-color: var(--accent); color:var(--accent); }
+  .round-btn.interact.ready{ background: var(--accent); color:var(--accent-ink); }
+  .round-btn.kill{ border-color: var(--imp); color:var(--imp); width:60px; height:60px; font-size:.7rem; }
+  .round-btn.kill.ready{ background: var(--imp); color:#fff; }
+  .round-btn.sab{ border-color: #B98CFF; color:#B98CFF; width:56px; height:56px; font-size:.62rem; }
+  .round-btn.sab.ready{ background:#B98CFF; color:#1a0d33; }
+  .round-btn:disabled{ opacity:.35; }
+  .ghost-chip{ color:#B7C6E8 !important; border-color:#B7C6E855 !important; }
+  #lightsOverlay{
+    position:absolute; inset:0; pointer-events:none; z-index:5; display:none;
+    background: radial-gradient(circle 160px at var(--vx,50%) var(--vy,50%), transparent 0%, transparent 55%, #000000e6 88%);
+  }
+  #lightsOverlay.active{ display:block; }
+
+  /* ---------- OVERLAYS ---------- */
+  .overlay{
+    position:absolute; inset:0; background:#02040acc; backdrop-filter: blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:20; padding:16px;
+  }
+  .overlay.active{ display:flex; }
+  .overlay-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:24px; width:100%; max-width:460px; max-height:86vh; overflow-y:auto;
+  }
+  .overlay-card h3{ margin:0 0 4px; }
+  .overlay-card .sub{ color:var(--muted); font-size:.85rem; margin-bottom:16px; }
+  .vote-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .vote-row{
+    display:flex; align-items:center; gap:10px; background:var(--panel2);
+    border:1px solid var(--border-soft); border-radius:10px; padding:9px 12px;
+  }
+  .vote-row .dot{ width:22px; height:22px; border-radius:6px; flex-shrink:0; border:1px solid #ffffff33; }
+  .vote-row .nm{ flex:1; font-weight:600; font-size:.9rem; }
+  .vote-row .dead-tag{ color:var(--muted); font-size:.72rem; }
+  .vote-row button{
+    font-family:'Rubik',sans-serif; font-weight:600; font-size:.78rem;
+    background:transparent; border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:6px 12px; cursor:pointer;
+  }
+  .vote-row button:hover{ border-color:var(--accent); color:var(--accent); }
+  .vote-row button:disabled{ opacity:.3; }
+  .vote-row button.chosen{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .skip-btn{ width:100%; }
+  .skip-btn.chosen{ border-color:var(--accent); color:var(--accent); }
+  .meeting-timer{
+    font-family:'Orbitron',sans-serif; font-weight:800; font-size:1.6rem; color:var(--accent);
+    text-align:center; margin-bottom:14px; letter-spacing:.05em;
+  }
+  .chat-log{
+    max-height:160px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;
+    margin-bottom:10px; padding:8px; background:var(--panel2); border-radius:10px;
+    border:1px solid var(--border-soft);
+  }
+  .chat-line{ font-size:.82rem; line-height:1.4; }
+  #profileCard{
+    position:absolute; left:50%; top: calc(70px + env(safe-area-inset-top,0px));
+    transform:translateX(-50%); display:flex; align-items:center; gap:10px;
+    background:#0D1220ee; border:1px solid var(--border); border-radius:12px;
+    padding:8px 14px; max-width:280px; z-index:8;
+  }
+  #profileCard canvas{ flex-shrink:0; }
+  #profileCard .pc-text{ display:flex; flex-direction:column; }
+  #profileCard .pc-name{ font-weight:700; font-size:.82rem; font-family:'Orbitron',sans-serif; }
+  #profileCard .pc-line{ font-size:.75rem; color:var(--muted); margin-top:2px; }
+  .chat-line .who{ font-weight:700; margin-right:4px; }
+  .chat-input-row{ display:flex; gap:8px; margin-bottom:14px; }
+  .chat-input-row input{
+    flex:1; padding:9px 12px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); font-size:.85rem; font-family:'Rubik',sans-serif;
+  }
+  .chat-input-row input:focus{ outline:none; border-color:var(--accent); }
+  .chat-input-row button{
+    font-family:'Rubik',sans-serif; font-weight:700; font-size:.8rem;
+    background:var(--accent); color:var(--accent-ink); border:none; border-radius:8px;
+    padding:9px 14px; cursor:pointer;
+  }
+  .room-pick-list{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .task-progress-wrap{ margin:18px 0; }
+  .bar-track{ height:16px; background:var(--panel2); border-radius:999px; overflow:hidden; border:1px solid var(--border-soft); }
+  .bar-fill{ height:100%; width:0%; background:linear-gradient(90deg,var(--ok),#69f2b8); }
+  .hold-btn{
+    width:100%; padding:22px; margin-top:14px; border-radius:12px; border:1px dashed var(--border);
+    background:var(--panel2); color:var(--text); font-weight:700; font-family:'Orbitron',sans-serif;
+    font-size:.85rem; cursor:pointer;
+  }
+  .click-count{ font-family:'Orbitron',sans-serif; font-size:2.2rem; text-align:center; margin:10px 0; color:var(--accent); }
+  .toast{
+    position:absolute; top: calc(70px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%);
+    background:#0D1220ee; border:1px solid var(--ok); color:var(--ok); padding:9px 18px;
+    border-radius:10px; font-size:.85rem; font-weight:600; opacity:0; transition:opacity .25s ease; z-index:30;
+    pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; }
+  .end-title{ font-size:2rem; margin:0 0 8px; text-align:center; }
+  .end-title.win{ color:var(--ok); } .end-title.lose{ color:var(--imp); }
+  .end-desc{ text-align:center; color:var(--muted); margin-bottom:22px; }
+
+  ::-webkit-scrollbar{ width:8px; } ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; }
+
+  @media (max-width: 480px){
+    .customize-wrap{ flex-direction:column; align-items:center; }
+    .preview-card{ width:100%; max-width:230px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START -->
+  <div class="screen active" id="screen-start">
+    <canvas class="stars-bg" id="starsStart"></canvas>
+    <div class="logo-wrap">
+      <h1>Star<span>Stellar</span></h1>
+      <div class="tagline">GEMİDE KİM İHANET EDİYOR?</div>
+    </div>
+    <button class="btn-primary" id="btn-new-game">YENİ OYUN</button>
+    <button class="btn-ghost" id="btn-how-to-play" style="margin-top:14px;">NASIL OYNANIR</button>
+    <button class="btn-ghost" id="btn-codes" style="margin-top:10px; font-size:.75rem; padding:8px 16px; opacity:.6;">KODLAR</button>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div class="screen" id="screen-howto">
+    <canvas class="stars-bg" id="starsHowto"></canvas>
+    <div class="panel" style="max-width:600px; max-height:80vh; overflow-y:auto;">
+      <h2>Nasıl Oynanır</h2>
+      <div class="sub">Kurallar ve kontroller</div>
+      <div style="font-size:.9rem; line-height:1.7; color:var(--text);">
+        <h3 style="font-size:1rem; color:var(--accent); margin-bottom:6px;">Amaç</h3>
+        <p style="margin-top:0; color:var(--muted);">Mürettebat (Crewmate) tüm görevleri tamamlayarak ya da aranızdaki impostor(lar)ı toplantılarda oylayarak kazanır. Impostor ise mürettebatı fark ettirmeden birer birer etkisiz hale getirerek kazanır.</p>
+        <h3 style="font-size:1rem; color:var(--accent); margin-bottom:6px;">Kontroller</h3>
+        <p style="margin-top:0; color:var(--muted);">Sol alttaki ok tuşları (veya WASD) ile hareket edersin. Sağ alttaki E butonu ile görev yapma, ceset bildirme ve acil toplantı başlatma gibi etkileşimleri gerçekleştirirsin.</p>
+        <h3 style="font-size:1rem; color:var(--accent); margin-bottom:6px;">Crewmate</h3>
+        <p style="margin-top:0; color:var(--muted);">Haritadaki görevleri tamamla. Bir ceset bulursan bildir, şüphelendiğin kişileri toplantılarda oyla.</p>
+        <h3 style="font-size:1rem; color:var(--accent); margin-bottom:6px;">Impostor</h3>
+        <p style="margin-top:0; color:var(--muted);">Kimliğini gizleyerek mürettebatı öldür. Işıkları kesip kapıları kilitleyerek sabotaj yapabilirsin. Sahte görev yaparak şüpheyi üzerinden atabilirsin.</p>
+      </div>
+      <div class="row-actions">
+        <button class="btn-primary" id="btn-howto-back" style="padding:12px 28px; font-size:.9rem;">GERİ DÖN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODES SCREEN -->
+  <div class="screen" id="screen-codes">
+    <canvas class="stars-bg" id="starsCodes"></canvas>
+    <div class="panel">
+      <h2>Kodlar</h2>
+      <div class="sub">Bir kod biliyorsan aşağıya yaz.</div>
+      <div class="field">
+        <label>Kod</label>
+        <input type="text" id="codeInput" class="name-input" maxlength="20" placeholder="Kodu yaz..." style="text-transform:uppercase;">
+      </div>
+      <div class="row-actions">
+        <button class="btn-ghost" id="btn-codes-back">Geri</button>
+        <button class="btn-primary" id="btn-codes-submit" style="padding:12px 28px; font-size:.9rem;">GÖNDER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHEAT SCREEN -->
+  <div class="screen" id="screen-cheat">
+    <canvas class="stars-bg" id="starsCheat"></canvas>
+    <div class="panel">
+      <h2>Hile Menüsü</h2>
+      <div class="sub">Bir sonraki oyun için geçerli olacak ayarlar.</div>
+      <div class="field">
+        <label>Rol Zorlama</label>
+        <div class="pills" id="pillsCheatRole"></div>
+      </div>
+      <div class="field">
+        <label>Diğer</label>
+        <div class="pills" id="pillsCheatReveal"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn-ghost" id="btn-cheat-back">Geri</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE SELECT -->
+  <div class="screen" id="screen-modeselect">
+    <canvas class="stars-bg" id="starsMode"></canvas>
+    <div class="panel" style="text-align:center;">
+      <h2>Oyun Modu</h2>
+      <div class="sub">Nasıl oynamak istersin?</div>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+        <button class="btn-primary" id="btn-mode-single" style="padding:16px;">TEK OYUNCULU</button>
+        <button class="btn-ghost" id="btn-mode-multi" style="padding:16px; opacity:.6;">ÇOK OYUNCULU<br><span style="font-size:.72rem;">Yakında gelecek!</span></button>
+      </div>
+      <div class="row-actions" style="justify-content:center; margin-top:18px;">
+        <button class="btn-ghost" id="btn-modeselect-back">Geri</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <div class="screen" id="screen-lobby">
+    <canvas class="stars-bg" id="starsLobby"></canvas>
+    <div class="panel">
+      <h2>Sunucu Ayarları</h2>
+      <div class="sub">Katılmak istediğin sunucuyu yapılandır.</div>
+
+      <div class="field">
+        <label>Sunucu Boyutu (Kişi Sayısı)</label>
+        <div class="pills" id="pillsCapacity"></div>
+      </div>
+      <div class="field">
+        <label>Impostor Sayısı</label>
+        <div class="pills" id="pillsImpostor"></div>
+      </div>
+      <div class="field">
+        <label>Sunucular</label>
+        <div class="pills" id="pillsServerPick"></div>
+      </div>
+      <div class="field">
+        <label>Öldürme Süresi (sn)</label>
+        <div class="pills" id="pillsKillCd"></div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn-ghost" id="btn-lobby-back">Geri</button>
+        <button class="btn-primary" id="btn-lobby-join" style="padding:12px 28px; font-size:.9rem;">SUNUCUYA KATIL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAITING / CUSTOMIZE -->
+  <div class="screen" id="screen-waiting">
+    <canvas class="stars-bg" id="starsWait"></canvas>
+    <div class="customize-wrap">
+      <div class="preview-card">
+        <canvas id="previewCanvas" width="200" height="240"></canvas>
+        <div class="preview-name" id="previewName">-</div>
+      </div>
+      <div class="cust-panel">
+        <h2 style="margin-top:0;">Bekleme Noktası</h2>
+        <div class="sub">Karakterini özelleştir ve hazır olduğunda oyuna başla.</div>
+
+        <div class="field">
+          <label>İsim</label>
+          <input type="text" id="nameInput" class="name-input" maxlength="18" placeholder="İsmini yaz...">
+        </div>
+        <div class="field">
+          <label>Renk</label>
+          <div class="swatches" id="swatchColors"></div>
+        </div>
+        <div class="field">
+          <label>Gövde</label>
+          <div class="opt-scroll" id="pillsSuit"></div>
+        </div>
+        <div class="field">
+          <label>Üst</label>
+          <div class="opt-scroll" id="pillsHat"></div>
+        </div>
+        <div class="field">
+          <label>Cam</label>
+          <div class="opt-scroll" id="pillsVisor"></div>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn-ghost" id="btn-wait-back">Sunucudan Ayrıl</button>
+          <button class="btn-primary" id="btn-wait-start" style="padding:12px 28px; font-size:.9rem;">OYUNU BAŞLAT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROLE REVEAL -->
+  <div class="screen" id="screen-role">
+    <canvas class="stars-bg" id="starsRole"></canvas>
+    <div class="role-card">
+      <div class="role-label">ROLÜN</div>
+      <h1 class="role-name" id="roleNameText">-</h1>
+      <div class="role-desc" id="roleDescText"></div>
+      <button class="btn-primary" id="btn-role-continue">DEVAM ET</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <canvas id="gameCanvas"></canvas>
+    <div class="toast" id="toast"></div>
+    <div class="hud">
+      <div class="hud-top">
+        <div class="chip" id="roleChip">Crewmate</div>
+        <div class="chip"><span class="room-name" id="roomNameChip">Cafeteria</span></div>
+        <div class="chip" id="taskChip">Görevler: 0/8</div>
+      </div>
+      <div class="dpad">
+        <button class="up" data-k="up">▲</button>
+        <button class="down" data-k="down">▼</button>
+        <button class="left" data-k="left">◀</button>
+        <button class="right" data-k="right">▶</button>
+      </div>
+      <div id="promptChip"></div>
+      <div id="profileCard" style="display:none;"></div>
+      <div class="action-cluster">
+        <button class="round-btn sab" id="btnSabLights" style="display:none;">IŞIK<br>KES</button>
+        <button class="round-btn sab" id="btnSabDoors" style="display:none;">KAPI<br>KİLİT</button>
+        <div id="killCdLabel" style="display:none; background:#0D1220ee; border:1px solid var(--imp); color:var(--imp); font-size:.72rem; font-weight:700; padding:5px 10px; border-radius:8px; white-space:nowrap;"></div>
+        <button class="round-btn kill" id="btnKill" style="display:none;">ÖLDÜR<br>(F)</button>
+        <button class="round-btn interact" id="btnInteract" disabled>E</button>
+      </div>
+    </div>
+    <div id="lightsOverlay"></div>
+
+    <!-- Meeting Overlay -->
+    <div class="overlay" id="overlayMeeting">
+      <div class="overlay-card">
+        <h3 id="meetingTitle">Acil Toplantı</h3>
+        <div class="sub">Tartışma ve oylama süresi:</div>
+        <div class="meeting-timer" id="meetingTimer">30</div>
+        <div class="chat-log" id="meetingChatLog"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" maxlength="140" placeholder="Bir şeyler yaz...">
+          <button id="btnChatSend">GÖNDER</button>
+        </div>
+        <div class="vote-list" id="voteList"></div>
+        <button class="btn-ghost skip-btn" id="btnSkipVote">OYU GEÇ</button>
+      </div>
+    </div>
+
+    <!-- Door Sabotage Room Picker -->
+    <div class="overlay" id="overlayDoorPick">
+      <div class="overlay-card">
+        <h3>Kapıları Kilitle</h3>
+        <div class="sub">Hangi odanın kapılarını kilitlemek istiyorsun?</div>
+        <div class="room-pick-list" id="roomPickList"></div>
+        <button class="btn-ghost" id="btnDoorPickCancel" style="width:100%;">İptal</button>
+      </div>
+    </div>
+
+    <!-- Meeting Result Overlay -->
+    <div class="overlay" id="overlayResult">
+      <div class="overlay-card" style="text-align:center;">
+        <h3 id="resultTitle">Sonuç</h3>
+        <div class="sub" id="resultDesc" style="margin-bottom:20px;"></div>
+        <button class="btn-primary" id="btnResultContinue" style="padding:12px 28px; font-size:.9rem;">DEVAM ET</button>
+      </div>
+    </div>
+
+    <!-- Task Overlay -->
+    <div class="overlay" id="overlayTask">
+      <div class="overlay-card">
+        <h3 id="taskTitle">Görev</h3>
+        <div class="sub" id="taskSub">Görevi tamamla.</div>
+        <div id="taskClicksWrap" style="display:none;">
+          <div class="click-count" id="clickCount">0 / 5</div>
+          <button class="btn-primary" id="btnClickTask" style="width:100%;">TIKLA</button>
+        </div>
+        <div id="taskHoldWrap" style="display:none;">
+          <div class="task-progress-wrap"><div class="bar-track"><div class="bar-fill" id="holdBar"></div></div></div>
+          <button class="hold-btn" id="btnHoldTask">BASILI TUT</button>
+        </div>
+        <div class="row-actions">
+          <button class="btn-ghost" id="btnTaskCancel">İptal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cameras Overlay -->
+    <div class="overlay" id="overlayCameras">
+      <div class="overlay-card" style="text-align:center;">
+        <h3 id="cameraLabel">Kamera</h3>
+        <canvas id="cameraCanvas" width="380" height="260" style="width:100%; border-radius:8px; background:#0A0F1E;"></canvas>
+        <div class="row-actions" style="justify-content:center;">
+          <button class="btn-ghost" id="btnCamPrev">◀ Önceki</button>
+          <button class="btn-ghost" id="btnCamNext">Sonraki ▶</button>
+        </div>
+        <button class="btn-primary" id="btnCamClose" style="padding:12px 28px; font-size:.9rem; margin-top:10px;">KAPAT</button>
+      </div>
+    </div>
+
+    <!-- End Overlay -->
+    <div class="overlay" id="overlayEnd">
+      <div class="overlay-card" style="text-align:center;">
+        <h2 class="end-title" id="endTitle">-</h2>
+        <div class="end-desc" id="endDesc"></div>
+        <button class="btn-primary" id="btnEndMenu" style="padding:12px 28px; font-size:.9rem;">ANA MENÜYE DÖN</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+// ============ DATA ============
+const COLORS = [
+  {name:'Sarı', hex:'#FEF445'},
+  {name:'Açık Sarı', hex:'#FFFBB0'},
+  {name:'Yeşil', hex:'#19A85A'},
+  {name:'Açık Yeşil', hex:'#8CFFA6'},
+  {name:'Koyu Yeşil', hex:'#0E5C2B'},
+  {name:'Mavi', hex:'#2A50E8'},
+  {name:'Ciyan', hex:'#44E5E8'},
+  {name:'Lacivert', hex:'#152459'},
+  {name:'Pembe', hex:'#FF63D1'},
+  {name:'Toz Pembe', hex:'#E8AFC0'},
+  {name:'Mor', hex:'#6C2FBD'},
+  {name:'Siyah', hex:'#1C1F24'},
+  {name:'Gri', hex:'#8D97A6'},
+  {name:'Beyaz', hex:'#E9F3FF'},
+  {name:'Turuncu', hex:'#EF7D1A'},
+  {name:'Kırmızı', hex:'#C11F1F'},
+  {name:'Kahverengi', hex:'#6B4423'},
+  {name:'Bordo', hex:'#6B0E27'},
+  {name:'Mercan', hex:'#F2785C'},
+  {name:'Zeytin', hex:'#7A7A2E'},
+];
+const SUITS = ['Siyah Takım Elbise','Beyaz Takım Elbise','Doktor Üniforması','Polis Üniforması','Pilot Üniforması','Uzay Zırhı','Şef Önlüğü','Asker Üniforması','Dalgıç Kıyafeti','Astronot Elbisesi','Denizci Üniforması','Laboratuvar Önlüğü'];
+const HATS_RAW = ['Yeşil Bitki','Yeşil Yaprak','Lego Parçası','Unicorn Boynuzu','Ters Şapka','Bisiklet Kaskı','Kaptan Şapkası','Taç','Kulaklık','Cadı Şapkası','Fötr Şapka','Noel Bereliği','Korsan Şapkası','Propeller Şapka'];
+const HAT_BASE = ['Yeşil Bitki','Yeşil Yaprak','Lego Parçası','Unicorn Boynuzu','Ters Şapka','Bisiklet Kaskı','Kaptan Şapkası','Taç','Kulaklık','Cadı Şapkası'];
+const HAT_TINTS = {};
+const HATS = HATS_RAW;
+const VISORS = ['Maske','Gözlük','Yara Bandı','Gülücük Emojisi','Şeffaf Kalkan','3D Gözlük'];
+const VISOR_BASE = ['Maske','Gözlük','Yara Bandı','Gülücük Emojisi','Şeffaf Kalkan','3D Gözlük'];
+const VISOR_TINTS = {
+  'Altın Vizör':['Şeffaf Kalkan','#FFD23F'],
+  'Kalp Gözlük':['Gözlük','#FF63D1'],
+  'Yıldız Gözlük':['3D Gözlük','#FFD23F'],
+  'Lazer Gözlük':['Gözlük','#E6484B'],
+};
+const NAME_POOL = ['BlackCat','Apollo','Sesegel','EmjanBabo','LAZ','eyüp','Minic','Eniac','Takla King','GreenYard','Askitosh','Dogme','AmcanBebe','TAMER','Kutu','ChickenHolmes','Ahmet Reis','Miraj','Emirham','Samet Karataş','Batustyle'];
+
+const WORLD_W = 5000, WORLD_H = 2200;
+const R = 16;
+const SPEED = 240;
+const BOT_SPEED_MIN = 110, BOT_SPEED_MAX = 170;
+
+// Gemi (sağ blok, x:900-3980) — düzgün hizalı grid yerleşim
+const SHIP_OFFSET_X = 900;
+const ROOMS = [
+ {key:'waitingroom', label:'Bekleme Yeri', x:60,y:820,w:560,h:460},
+ {key:'cafeteria', label:'Cafeteria', x:1900,y:60,w:1000,h:560},
+ {key:'upperengine', label:'Üst Motor', x:1860,y:820,w:460,h:420},
+ {key:'medbay', label:'Revir', x:1860,y:1440,w:420,h:420},
+ {key:'security', label:'Güvenlik', x:2480,y:1440,w:380,h:420},
+ {key:'electrical', label:'Elektrik', x:3100,y:60,w:500,h:500},
+ {key:'admin', label:'Yönetim', x:3100,y:760,w:500,h:460},
+ {key:'storage', label:'Depo', x:3100,y:1420,w:500,h:460},
+ {key:'weapons', label:'Silah Sistemleri', x:3800,y:60,w:450,h:420},
+ {key:'o2', label:'Oksijen', x:4450,y:60,w:420,h:380},
+ {key:'navigation', label:'Seyir', x:3800,y:680,w:420,h:500},
+ {key:'cargo', label:'Kargo Ambarı', x:4420,y:680,w:460,h:500},
+];
+const CORRIDORS = [
+ {x:2040,y:580,w:140,h:280},
+ {x:2000,y:1200,w:140,h:280},
+ {x:2240,y:1580,w:280,h:140},
+ {x:2860,y:240,w:280,h:140},
+ {x:3280,y:520,w:140,h:280},
+ {x:3280,y:1180,w:140,h:280},
+ {x:3560,y:200,w:280,h:140},
+ {x:4210,y:180,w:280,h:140},
+ {x:3940,y:440,w:140,h:280},
+ {x:4180,y:860,w:280,h:140},
+ {x:3560,y:900,w:280,h:140},
+];
+const ROOM_CORRIDORS = {
+  cafeteria: [0,3],
+  upperengine: [0,1],
+  medbay: [1,2],
+  security: [2],
+  electrical: [3,4,6],
+  admin: [4,5],
+  storage: [5],
+  weapons: [6,7,8],
+  o2: [7],
+  navigation: [8,10,9],
+  cargo: [9],
+};
+const LIGHTS_FIX = {x:3350, y:1000};
+const CAMERAS = [
+  {key:'cam1', label:'Kamera 1 - Cafeteria', x:2300, y:300},
+  {key:'cam2', label:'Kamera 2 - Elektrik', x:3350, y:250},
+  {key:'cam3', label:'Kamera 3 - Depo', x:3350, y:1650},
+  {key:'cam4', label:'Kamera 4 - Yönetim', x:3350, y:980},
+];
+const CAMERA_PANEL = {x:2600, y:1600};
+
+const TASKS_DEF = [
+ {id:'wires', room:'electrical', label:'Kabloları Bağla', x:3350, y:280, type:'clicks', need:6},
+ {id:'filter', room:'o2', label:'Filtreyi Temizle', x:4660, y:250, type:'hold'},
+ {id:'crates', room:'storage', label:'Kutuları Taşı', x:3350, y:1650, type:'clicks', need:6},
+ {id:'course', room:'navigation', label:'Rota Belirle', x:4010, y:930, type:'hold'},
+ {id:'calibrate', room:'weapons', label:'Silahları Kalibre Et', x:4025, y:270, type:'clicks', need:6},
+ {id:'scan', room:'medbay', label:'Kan Örneği Tara', x:2070, y:1650, type:'hold'},
+ {id:'cardswipe', room:'admin', label:'Kart Okut', x:3350, y:990, type:'clicks', need:5},
+ {id:'enginefix', room:'upperengine', label:'Motoru Ayarla', x:2090, y:1030, type:'clicks', need:6},
+ {id:'cargosort', room:'cargo', label:'Kargoyu Sırala', x:4650, y:930, type:'clicks', need:6},
+];
+const WAITING_SPAWN = {x:340, y:1050};
+const EMERGENCY = {x:2400, y:340};
+const SPAWN = {x:2400, y:340};
+
+// ============ HELPERS ============
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function dist(x1,y1,x2,y2){ return Math.hypot(x1-x2, y1-y2); }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function shade(hex, amt){
+  const n = parseInt(hex.slice(1),16);
+  let r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r = clamp(r+amt,0,255); g = clamp(g+amt,0,255); b = clamp(b+amt,0,255);
+  return 'rgb('+r+','+g+','+b+')';
+}
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function rectContains(rc,x,y,radius){
+  return x-radius>=rc.x && x+radius<=rc.x+rc.w && y-radius>=rc.y && y+radius<=rc.y+rc.h;
+}
+function isWalkable(x,y,radius,opts){
+  opts = opts || {};
+  for(let i=0;i<ROOMS.length;i++){
+    if(rectContains(ROOMS[i],x,y,radius)) return true;
+  }
+  for(let i=0;i<CORRIDORS.length;i++){
+    if(!opts.ignoreDoors && state.doorLocks[i] && state.doorLocks[i] > performance.now()) continue;
+    if(rectContains(CORRIDORS[i],x,y,radius)) return true;
+  }
+  return false;
+}
+function roomAt(x,y){
+  for(const r of ROOMS){ if(x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h) return r.label; }
+  return 'Koridor';
+}
+
+// ============ BOT PATHFINDING ============
+const PATH_CELL = 40;
+const PATH_COLS = Math.ceil(WORLD_W/PATH_CELL);
+const PATH_ROWS = Math.ceil(WORLD_H/PATH_CELL);
+let PATH_GRID = null;
+function buildPathGrid(){
+  PATH_GRID = new Uint8Array(PATH_COLS*PATH_ROWS);
+  for(let ry=0; ry<PATH_ROWS; ry++){
+    for(let rx=0; rx<PATH_COLS; rx++){
+      const cx = rx*PATH_CELL + PATH_CELL/2;
+      const cy = ry*PATH_CELL + PATH_CELL/2;
+      PATH_GRID[ry*PATH_COLS+rx] = isWalkable(cx,cy,R,{ignoreDoors:true}) ? 1 : 0;
+    }
+  }
+}
+function clampInt(v,a,b){ return Math.max(a, Math.min(b, v|0)); }
+function nearestWalkableCell(cx,cy){
+  if(PATH_GRID[cy*PATH_COLS+cx]) return [cx,cy];
+  for(let rad=1; rad<8; rad++){
+    for(let dy=-rad; dy<=rad; dy++){
+      for(let dx=-rad; dx<=rad; dx++){
+        const nx=cx+dx, ny=cy+dy;
+        if(nx<0||ny<0||nx>=PATH_COLS||ny>=PATH_ROWS) continue;
+        if(PATH_GRID[ny*PATH_COLS+nx]) return [nx,ny];
+      }
+    }
+  }
+  return [cx,cy];
+}
+function findPathTo(fromX,fromY,toX,toY){
+  const sx0 = clampInt(Math.floor(fromX/PATH_CELL),0,PATH_COLS-1);
+  const sy0 = clampInt(Math.floor(fromY/PATH_CELL),0,PATH_ROWS-1);
+  const tx0 = clampInt(Math.floor(toX/PATH_CELL),0,PATH_COLS-1);
+  const ty0 = clampInt(Math.floor(toY/PATH_CELL),0,PATH_ROWS-1);
+  const [sx,sy] = nearestWalkableCell(sx0,sy0);
+  const [tx,ty] = nearestWalkableCell(tx0,ty0);
+  const startIdx = sy*PATH_COLS+sx, targetIdx = ty*PATH_COLS+tx;
+  if(startIdx===targetIdx) return [{x:toX,y:toY}];
+  const visited = new Int32Array(PATH_COLS*PATH_ROWS).fill(-1);
+  visited[startIdx] = startIdx;
+  let queue = [startIdx], qi = 0, found = false;
+  while(qi<queue.length){
+    const cur = queue[qi++];
+    if(cur===targetIdx){ found=true; break; }
+    const cx = cur % PATH_COLS, cy = (cur / PATH_COLS)|0;
+    const neigh = [[cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]];
+    for(const [nx,ny] of neigh){
+      if(nx<0||ny<0||nx>=PATH_COLS||ny>=PATH_ROWS) continue;
+      const nIdx = ny*PATH_COLS+nx;
+      if(visited[nIdx]!==-1 || !PATH_GRID[nIdx]) continue;
+      visited[nIdx] = cur;
+      queue.push(nIdx);
+    }
+  }
+  if(!found) return [{x:toX,y:toY}];
+  const cellsPath = [];
+  let cur = targetIdx;
+  while(cur!==startIdx){ cellsPath.push(cur); cur = visited[cur]; }
+  cellsPath.reverse();
+  const waypoints = cellsPath.map(idx=>{
+    const cx = idx % PATH_COLS, cy = (idx / PATH_COLS)|0;
+    return {x: cx*PATH_CELL+PATH_CELL/2, y: cy*PATH_CELL+PATH_CELL/2};
+  });
+  waypoints.push({x:toX,y:toY});
+  return waypoints;
+}
+
+// ============ STATE ============
+const state = {
+  settings: { map:'Skeld', capacity:10, impostors:2, killCd:12 },
+  me: { color: 5, suit: SUITS[0], hat: HATS_RAW[0], visor: VISORS[1], name: NAME_POOL[0] },
+  players: [],
+  bodies: [],
+  taskState: {},
+  keys: {},
+  camera: {x:0,y:0},
+  gameOver: null,
+  meetingOpen: false,
+  killCooldownMax: 12,
+  killCooldown: 0,
+  lastTs: 0,
+  currentInteract: null,
+  activeTask: null,
+  doorLocks: {},
+  lightsOff: false,
+  lightsOffUntil: 0,
+  lightsCooldownMax: 40,
+  lightsCooldown: 0,
+  doorsCooldownMax: 30,
+  doorsCooldown: 0,
+  meetingVote: undefined,
+  cheat: { forceRole: null, revealRoles: false },
+};
+let meetingInterval = null;
+buildPathGrid();
+
+function meP(){ return state.players.find(p=>p.id==='me'); }
+function aliveImpostors(){ return state.players.filter(p=>p.alive && p.isImpostor).length; }
+function aliveCrew(){ return state.players.filter(p=>p.alive && !p.isImpostor).length; }
+function assignPersonalTasks(){
+  state.players.forEach(p=>{
+    const shuffled = shuffle(TASKS_DEF);
+    p.myTasks = shuffled.slice(0, 4).map(t=>t.id);
+    p.tasksDone = {};
+    p.myTasks.forEach(id=> p.tasksDone[id] = false);
+  });
+}
+function allCrewTasksDone(){
+  return state.players.filter(p=>!p.isImpostor).every(p=> p.myTasks.every(id=>p.tasksDone[id]));
+}
+
+function buildPlayers(){
+  const cap = state.settings.capacity;
+  const impCount = Math.min(state.settings.impostors, Math.max(1, Math.floor(cap/2)-1));
+  if(!state.me.name || !state.me.name.trim()) state.me.name = pick(NAME_POOL);
+  state.me.name = state.me.name.trim().slice(0,18);
+  const myNameLower = state.me.name.toLowerCase();
+  const availableNames = shuffle(NAME_POOL.filter(n=>n.toLowerCase()!==myNameLower));
+  const availableColors = shuffle(COLORS.map((c,i)=>i).filter(i=>i!==state.me.color));
+
+  const players = [];
+  players.push({
+    id:'me', name: state.me.name, colorIdx: state.me.color, suit: state.me.suit,
+    hat: state.me.hat, visor: state.me.visor, isBot:false, isImpostor:false, alive:true,
+    x: WAITING_SPAWN.x, y: WAITING_SPAWN.y, killCd:0,
+  });
+  for(let i=0;i<cap-1;i++){
+    const name = availableNames[i % availableNames.length] || ('Oyuncu'+i);
+    const colorIdx = availableColors[i] !== undefined ? availableColors[i] : Math.floor(Math.random()*COLORS.length);
+    players.push({
+      id:'bot'+i, name, colorIdx, suit: pick(SUITS), hat: pick(HATS_RAW),
+      visor: pick(VISORS), isBot:true, isImpostor:false, alive:true,
+      x: WAITING_SPAWN.x - 300, y: WAITING_SPAWN.y,
+      arrived: false, arriveAt: rand(1.5, 7),
+      dir: rand(0, Math.PI*2), nextTurn: rand(1,3), speed: rand(BOT_SPEED_MIN,BOT_SPEED_MAX),
+      killCd: rand(10,22), sabCd: rand(15,35),
+      target: null, path: null, pathIndex: 0, workTimer: 0,
+    });
+  }
+  const idxs = shuffle(players.map((_,i)=>i)).slice(0, impCount);
+  idxs.forEach(i=> players[i].isImpostor = true);
+
+  if(state.cheat.forceRole==='impostor' && !players[0].isImpostor){
+    const swapIdx = idxs.length ? idxs[0] : 1;
+    players[0].isImpostor = true;
+    players[swapIdx].isImpostor = false;
+  } else if(state.cheat.forceRole==='crewmate' && players[0].isImpostor){
+    players[0].isImpostor = false;
+    const nonImp = players.findIndex((pl,i)=> i!==0 && !pl.isImpostor);
+    if(nonImp>=0) players[nonImp].isImpostor = true;
+  }
+
+  state.players = players;
+  state.bodies = [];
+  state.taskState = {};
+  assignPersonalTasks();
+  state.killCooldownMax = state.settings.killCd;
+  state.killCooldown = 0;
+  state.gameOver = null;
+  state.meetingOpen = false;
+  state.currentInteract = null;
+  state.activeTask = null;
+  state.doorLocks = {};
+  state.lightsOff = false;
+  state.lightsOffUntil = 0;
+  state.lightsCooldown = 0;
+  state.doorsCooldown = 0;
+  state.meetingVote = undefined;
+  state.meetingVotesCast = {};
+  state.meetingBotVoted = new Set();
+  (state.meetingBotTimers||[]).forEach(clearTimeout);
+  state.meetingBotTimers = [];
+  clearInterval(meetingInterval);
+}
+
+function checkWin(){
+  if(state.gameOver) return;
+  if(aliveImpostors()===0){ state.gameOver='crew'; return; }
+  if(aliveImpostors() >= aliveCrew()){ state.gameOver='impostor'; return; }
+  const meRef = meP();
+  if(meRef && !meRef.isImpostor && allCrewTasksDone()){
+    state.gameOver='crew-tasks'; return;
+  }
+}
+
+// ============ CHARACTER DRAWING ============
+function drawCharacter(ctx, cx, cy, scale, p, opts){
+  opts = opts || {};
+  const color = COLORS[p.colorIdx] ? COLORS[p.colorIdx].hex : '#8D97A6';
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+  if(opts.facing === 'left'){ ctx.scale(-1, 1); }
+
+  const walkPhase = opts.walking ? Math.sin((opts.walkT||0) * 11) : 0;
+  const legSwing = walkPhase * 6;
+  const bob = opts.walking ? Math.abs(Math.sin((opts.walkT||0) * 11)) * 2 : 0;
+  ctx.translate(0, -bob);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(0, 34+bob, 22, 7, 0, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = shade(color,-45);
+  roundRectPath(ctx, -22, -14, 16, 34, 8); ctx.fill();
+
+  ctx.fillStyle = shade(color,-55);
+  ctx.save(); ctx.translate(-9, 29); ctx.rotate(legSwing*Math.PI/180); ctx.translate(9,-29);
+  roundRectPath(ctx, -14, 22, 10, 14, 4); ctx.fill();
+  ctx.restore();
+  ctx.save(); ctx.translate(11, 29); ctx.rotate(-legSwing*Math.PI/180); ctx.translate(-11,-29);
+  roundRectPath(ctx, 6, 22, 10, 14, 4); ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = color;
+  roundRectPath(ctx, -20, -32, 40, 62, 20);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+
+  drawSuit(ctx, p.suit, color);
+
+  ctx.fillStyle = '#BFE9FF';
+  roundRectPath(ctx, -2, -22, 26, 20, 10); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.save();
+  ctx.beginPath(); roundRectPath(ctx, -2, -22, 26, 20, 10); ctx.clip();
+  drawVisor(ctx, p.visor);
+  ctx.restore();
+
+  if(p.hat && p.hat !== 'Yok'){ drawHat(ctx, p.hat, color); }
+
+  ctx.restore();
+
+  if(opts.showName){
+    ctx.save();
+    ctx.font = '700 13px Rubik, sans-serif';
+    ctx.textAlign='center';
+    let label = p.name;
+    if(state.cheat && state.cheat.revealRoles && p.id!=='me'){
+      label += p.isImpostor ? ' [IMP]' : ' [CREW]';
+    }
+    ctx.fillStyle='rgba(0,0,0,0.65)';
+    ctx.fillText(label, cx+1, cy - 48*scale + 1);
+    ctx.fillStyle= state.cheat && state.cheat.revealRoles && p.id!=='me' ? (p.isImpostor?'#E6484B':'#5EC8F2') : (p.alive===false ? '#8996B3' : '#EAF2FF');
+    ctx.fillText(label, cx, cy - 48*scale);
+    ctx.restore();
+  }
+}
+
+const SUIT_MAP = {
+  'Mavi Takım Elbise':'Siyah Takım Elbise','Kırmızı Takım Elbise':'Beyaz Takım Elbise','Yeşil Doktor':'Doktor Üniforması',
+  'Sarı Polis':'Polis Üniforması','Turuncu Pilot':'Pilot Üniforması','Mor Zırh':'Uzay Zırhı','Pembe Önlük':'Şef Önlüğü',
+  'Gri Asker':'Asker Üniforması','Lacivert Takım':'Siyah Takım Elbise','Bordo Takım':'Beyaz Takım Elbise',
+  'Turkuaz Doktor':'Doktor Üniforması','Bronz Polis':'Polis Üniforması','Gümüş Pilot':'Pilot Üniforması','Zümrüt Zırh':'Uzay Zırhı',
+  'Altın Önlük':'Şef Önlüğü','Kahverengi Asker':'Asker Üniforması','Beyaz Zırh':'Uzay Zırhı',
+};
+function drawSuit(ctx, suit, baseColor){
+  if(SUIT_MAP[suit]) suit = SUIT_MAP[suit];
+  ctx.save();
+  if(suit === 'Siyah Takım Elbise' || suit === 'Beyaz Takım Elbise'){
+    const c = suit==='Siyah Takım Elbise' ? '#15181C' : '#F2F6FA';
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(0,-10); ctx.lineTo(-10,26); ctx.lineTo(-2,26); ctx.lineTo(0,-2);
+    ctx.lineTo(2,26); ctx.lineTo(10,26); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = suit==='Siyah Takım Elbise' ? '#C11F1F' : '#2A50E8';
+    roundRectPath(ctx,-3,-10,6,18,2); ctx.fill();
+  } else if(suit === 'Doktor Üniforması'){
+    ctx.fillStyle = '#F2F6FA';
+    roundRectPath(ctx,-18,-6,36,32,10); ctx.fill();
+    ctx.fillStyle = '#C11F1F';
+    roundRectPath(ctx,-3,4,6,16,1); ctx.fill();
+    roundRectPath(ctx,-9,10,18,6,1); ctx.fill();
+  } else if(suit === 'Polis Üniforması'){
+    ctx.fillStyle = '#152459';
+    roundRectPath(ctx,-18,-6,36,32,10); ctx.fill();
+    ctx.fillStyle = '#FEF445';
+    ctx.beginPath(); ctx.arc(-8,4,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#8a7a10'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle = '#0d1533';
+    roundRectPath(ctx,-16,18,32,5,2); ctx.fill();
+  } else if(suit === 'Pilot Üniforması'){
+    ctx.fillStyle = '#152459';
+    roundRectPath(ctx,-18,-6,36,32,10); ctx.fill();
+    ctx.fillStyle = '#FFC857';
+    roundRectPath(ctx,-19,-8,14,7,3); ctx.fill();
+    roundRectPath(ctx,5,-8,14,7,3); ctx.fill();
+  } else if(suit === 'Uzay Zırhı'){
+    ctx.fillStyle = '#B9C4D6';
+    roundRectPath(ctx,-19,-8,38,34,8); ctx.fill();
+    ctx.strokeStyle='#7C8AA3'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-19,6); ctx.lineTo(19,6); ctx.stroke();
+    ctx.fillStyle='#5C6E96';
+    [[-12,-2],[12,-2],[-12,18],[12,18]].forEach(pt=>{
+      ctx.beginPath(); ctx.arc(pt[0],pt[1],2.4,0,Math.PI*2); ctx.fill();
+    });
+  } else if(suit === 'Şef Önlüğü'){
+    ctx.fillStyle = '#F2F6FA';
+    ctx.beginPath();
+    ctx.moveTo(-6,-12); ctx.lineTo(6,-12); ctx.lineTo(9,2); ctx.lineTo(-9,2); ctx.closePath(); ctx.fill();
+    roundRectPath(ctx,-16,0,32,26,6); ctx.fill();
+    ctx.strokeStyle='#C7D2EA'; ctx.lineWidth=1;
+    roundRectPath(ctx,-10,8,20,10,2); ctx.stroke();
+  } else if(suit === 'Asker Üniforması'){
+    ctx.fillStyle = '#5B5E3D';
+    roundRectPath(ctx,-18,-6,36,32,10); ctx.fill();
+    ctx.fillStyle = '#3E4129';
+    ctx.beginPath(); ctx.moveTo(-18,-2); ctx.lineTo(10,20); ctx.lineTo(4,22); ctx.lineTo(-18,4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#D8C36B';
+    ctx.beginPath();
+    for(let i=0;i<5;i++){
+      const a=-Math.PI/2 + i*(Math.PI*2/5);
+      const px=Math.cos(a)*4, py=8+Math.sin(a)*4;
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.closePath(); ctx.fill();
+  } else if(suit === 'Dalgıç Kıyafeti'){
+    ctx.fillStyle = '#1C6B8C';
+    roundRectPath(ctx,-18,-8,36,34,8); ctx.fill();
+    ctx.fillStyle = '#F2A93B';
+    ctx.beginPath(); ctx.arc(0,2,9,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#0d3a4d'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-18,10); ctx.lineTo(18,10); ctx.stroke();
+  } else if(suit === 'Astronot Elbisesi'){
+    ctx.fillStyle = '#EAF2FF';
+    roundRectPath(ctx,-19,-8,38,34,8); ctx.fill();
+    ctx.fillStyle = '#C11F1F';
+    roundRectPath(ctx,-19,-8,38,7,4); ctx.fill();
+    ctx.strokeStyle='#9FB3CC'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,24); ctx.stroke();
+  } else if(suit === 'Denizci Üniforması'){
+    ctx.fillStyle = '#F2F6FA';
+    roundRectPath(ctx,-18,-6,36,32,10); ctx.fill();
+    ctx.fillStyle = '#152459';
+    ctx.beginPath(); ctx.moveTo(-18,-6); ctx.lineTo(0,10); ctx.lineTo(18,-6); ctx.lineTo(18,-1); ctx.lineTo(0,15); ctx.lineTo(-18,-1); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#C11F1F'; roundRectPath(ctx,-3,10,6,10,2); ctx.fill();
+  } else if(suit === 'Laboratuvar Önlüğü'){
+    ctx.fillStyle = '#F2F6FA';
+    roundRectPath(ctx,-19,-8,38,34,8); ctx.fill();
+    ctx.strokeStyle='#9FB3CC'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(0,24); ctx.stroke();
+    ctx.fillStyle='#5EC8F2'; roundRectPath(ctx,-14,4,9,9,2); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawVisor(ctx, visor){
+  if(VISOR_TINTS[visor]){
+    const [base,color] = VISOR_TINTS[visor];
+    ctx.save();
+    drawVisor(ctx, base);
+    ctx.restore();
+    return;
+  }
+  ctx.save();
+  if(visor === 'Maske'){
+    ctx.fillStyle = '#EAF2FF';
+    ctx.fillRect(-4,-10,30,14);
+    ctx.strokeStyle='#9FB3CC'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-4,-5); ctx.lineTo(26,-5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4,0); ctx.lineTo(26,0); ctx.stroke();
+  } else if(visor === 'Gözlük'){
+    ctx.strokeStyle = '#1C1F24'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.arc(4,-12,6,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(18,-12,6,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10,-12); ctx.lineTo(12,-12); ctx.stroke();
+  } else if(visor === 'Yara Bandı'){
+    ctx.fillStyle = '#E4B98C';
+    ctx.save(); ctx.translate(10,-12); ctx.rotate(-0.4);
+    ctx.fillRect(-14,-4,28,8);
+    ctx.strokeStyle='#B98F63'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-8,-4); ctx.lineTo(-8,4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-2,-4); ctx.lineTo(-2,4); ctx.stroke();
+    ctx.restore();
+  } else if(visor === 'Gülücük Emojisi'){
+    ctx.fillStyle = '#FFD23F';
+    ctx.beginPath(); ctx.arc(11,-12,11,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#3a2a00';
+    ctx.beginPath(); ctx.arc(6,-15,1.6,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(16,-15,1.6,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(11,-9,5,0,Math.PI); ctx.stroke();
+    ctx.strokeStyle='#3a2a00'; ctx.lineWidth=1.6; ctx.stroke();
+  } else if(visor === 'Şeffaf Kalkan'){
+    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+    ctx.fillRect(-4,-22,30,24);
+    ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-2,-18); ctx.lineTo(20,-4); ctx.stroke();
+  } else if(visor === '3D Gözlük'){
+    ctx.fillStyle='#E6484B'; roundRectPath(ctx,-3,-16,11,10,2); ctx.fill();
+    ctx.fillStyle='#44E5E8'; roundRectPath(ctx,10,-16,11,10,2); ctx.fill();
+    ctx.strokeStyle='#1C1F24'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(8,-11); ctx.lineTo(10,-11); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawHat(ctx, hat, baseColor){
+  if(HAT_TINTS[hat]){ drawHat(ctx, HAT_TINTS[hat][0], HAT_TINTS[hat][1]); return; }
+  ctx.save();
+  if(hat === 'Yeşil Bitki'){
+    ctx.fillStyle = '#8B5A2B'; roundRectPath(ctx,-8,-38,16,10,3); ctx.fill();
+    ctx.fillStyle = '#2E8B4E';
+    ctx.beginPath(); ctx.ellipse(-4,-42,6,10,0.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(4,-44,6,11,-0.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0,-40,5,9,0,0,Math.PI*2); ctx.fill();
+  } else if(hat === 'Yeşil Yaprak'){
+    ctx.fillStyle = '#2E8B4E';
+    ctx.beginPath(); ctx.ellipse(0,-40,7,16,0.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#1c5c31'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(0,-50); ctx.stroke();
+  } else if(hat === 'Lego Parçası'){
+    ctx.fillStyle = '#C11F1F';
+    roundRectPath(ctx,-14,-38,28,14,3); ctx.fill();
+    ctx.fillStyle = '#C11F1F';
+    ctx.beginPath(); ctx.arc(-6,-40,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(6,-40,3,0,Math.PI*2); ctx.fill();
+  } else if(hat === 'Unicorn Boynuzu'){
+    ctx.fillStyle = '#FFE9A8';
+    ctx.beginPath(); ctx.moveTo(-5,-32); ctx.lineTo(5,-32); ctx.lineTo(0,-54); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#E8B84B'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-3,-36); ctx.lineTo(3,-40); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-2,-44); ctx.lineTo(2,-48); ctx.stroke();
+  } else if(hat === 'Ters Şapka'){
+    ctx.fillStyle = shade(baseColor,-20);
+    ctx.beginPath(); ctx.arc(0,-34,15,Math.PI,Math.PI*2); ctx.fill();
+    ctx.fillStyle = shade(baseColor,-60);
+    roundRectPath(ctx,8,-38,10,7,2); ctx.fill();
+  } else if(hat === 'Bisiklet Kaskı'){
+    ctx.fillStyle = '#3F474E';
+    ctx.beginPath(); ctx.arc(0,-32,17,Math.PI,Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#EF7D1A';
+    ctx.fillRect(-2,-49,4,17);
+    ctx.fillStyle = '#1C1F24';
+    ctx.fillRect(-10,-38,3,9); ctx.fillRect(7,-38,3,9);
+  } else if(hat === 'Kaptan Şapkası'){
+    ctx.fillStyle='#152459';
+    ctx.beginPath(); ctx.arc(0,-36,14,Math.PI,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#0d1533'; roundRectPath(ctx,-16,-24,32,6,3); ctx.fill();
+    ctx.fillStyle='#FFC857';
+    ctx.beginPath(); ctx.arc(0,-36,4,0,Math.PI*2); ctx.fill();
+  } else if(hat === 'Taç'){
+    ctx.fillStyle='#FFD23F';
+    ctx.beginPath();
+    ctx.moveTo(-14,-30); ctx.lineTo(-14,-42); ctx.lineTo(-7,-32); ctx.lineTo(0,-46);
+    ctx.lineTo(7,-32); ctx.lineTo(14,-42); ctx.lineTo(14,-30); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#C11F1F';
+    ctx.beginPath(); ctx.arc(0,-38,2.4,0,Math.PI*2); ctx.fill();
+  } else if(hat === 'Kulaklık'){
+    ctx.strokeStyle='#1C1F24'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.arc(0,-34,15,Math.PI*1.1,Math.PI*1.9); ctx.stroke();
+    ctx.fillStyle='#1C1F24';
+    roundRectPath(ctx,-19,-24,7,14,3); ctx.fill();
+    roundRectPath(ctx,12,-24,7,14,3); ctx.fill();
+  } else if(hat === 'Cadı Şapkası'){
+    ctx.fillStyle='#1C1F24';
+    ctx.beginPath(); ctx.ellipse(0,-24,17,5,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-8,-26); ctx.lineTo(8,-26); ctx.lineTo(0,-56); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#6C2FBD'; roundRectPath(ctx,-8,-28,16,5,2); ctx.fill();
+  } else if(hat === 'Fötr Şapka'){
+    ctx.fillStyle='#5B4530';
+    ctx.beginPath(); ctx.ellipse(0,-24,16,5,0,0,Math.PI*2); ctx.fill();
+    roundRectPath(ctx,-11,-40,22,17,8); ctx.fill();
+    ctx.fillStyle='#2E2216'; roundRectPath(ctx,-11,-28,22,4,2); ctx.fill();
+  } else if(hat === 'Noel Bereliği'){
+    ctx.fillStyle='#C11F1F';
+    ctx.beginPath(); ctx.moveTo(-12,-26); ctx.lineTo(12,-26); ctx.lineTo(4,-48); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#F2F6FA'; roundRectPath(ctx,-13,-27,26,6,3); ctx.fill();
+    ctx.beginPath(); ctx.arc(4,-48,4,0,Math.PI*2); ctx.fill();
+  } else if(hat === 'Korsan Şapkası'){
+    ctx.fillStyle='#1C1F24';
+    ctx.beginPath(); ctx.moveTo(-17,-28); ctx.quadraticCurveTo(0,-46,17,-28); ctx.quadraticCurveTo(0,-34,-17,-28); ctx.fill();
+    ctx.fillStyle='#EAF2FF'; ctx.font='900 10px Rubik, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('☠', 0, -34);
+  } else if(hat === 'Propeller Şapka'){
+    ctx.fillStyle='#EF7D1A';
+    ctx.beginPath(); ctx.arc(0,-30,14,Math.PI,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#8D97A6'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(0,-44); ctx.stroke();
+    ctx.fillStyle='#5EC8F2';
+    ctx.beginPath(); ctx.ellipse(-10,-44,9,3,0.3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(10,-44,9,3,-0.3,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ============ SCREEN MGMT ============
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function initStars(id){
+  const c = document.getElementById(id);
+  if(!c) return;
+  function resize(){
+    c.width = c.parentElement.clientWidth;
+    c.height = c.parentElement.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  const ctx = c.getContext('2d');
+  const stars = [];
+  const n = 140;
+  for(let i=0;i<n;i++){
+    stars.push({x:Math.random(), y:Math.random(), r:Math.random()*1.6+0.3, a:Math.random()*0.6+0.3, tw:Math.random()*0.02+0.005});
+  }
+  function loop(){
+    if(!c.isConnected){ return; }
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const s of stars){
+      s.a += s.tw;
+      const alpha = 0.4 + Math.abs(Math.sin(s.a))*0.6;
+      ctx.fillStyle = 'rgba(255,255,255,'+alpha+')';
+      ctx.beginPath();
+      ctx.arc(s.x*c.width, s.y*c.height, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function buildPills(containerId, values, activeValue, onPick, locked){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  values.forEach(v=>{
+    const btn = document.createElement('div');
+    btn.className = 'pill' + (v===activeValue?' active':'') + (locked?' locked':'');
+    btn.textContent = v;
+    if(!locked){
+      btn.addEventListener('click', ()=>{ onPick(v); });
+    }
+    el.appendChild(btn);
+  });
+}
+function refreshLobbyUI(){
+  buildPills('pillsServerPick', ['Sunucu #1 (Sen - Host)'], 'Sunucu #1 (Sen - Host)', ()=>{}, true);
+  buildPills('pillsCapacity', [8,9,10,11,12,13,14,15], state.settings.capacity, (v)=>{
+    state.settings.capacity = v; refreshLobbyUI();
+  });
+  buildPills('pillsImpostor', [1,2,3], state.settings.impostors, (v)=>{
+    state.settings.impostors = v; refreshLobbyUI();
+  });
+  buildPills('pillsKillCd', [10,12,15,20,25], state.settings.killCd, (v)=>{
+    state.settings.killCd = v; refreshLobbyUI();
+  });
+}
+
+let previewCtx;
+function refreshCustomizeUI(){
+  const el = document.getElementById('swatchColors');
+  el.innerHTML = '';
+  COLORS.forEach((c,i)=>{
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (i===state.me.color?' active':'');
+    sw.style.background = c.hex;
+    sw.title = c.name;
+    sw.addEventListener('click', ()=>{ state.me.color = i; refreshCustomizeUI(); });
+    el.appendChild(sw);
+  });
+  buildPills('pillsSuit', SUITS, state.me.suit, (v)=>{ state.me.suit=v; refreshCustomizeUI(); });
+  buildPills('pillsHat', HATS, state.me.hat, (v)=>{ state.me.hat=v; refreshCustomizeUI(); });
+  buildPills('pillsVisor', VISORS, state.me.visor, (v)=>{ state.me.visor=v; refreshCustomizeUI(); });
+  const nameInput = document.getElementById('nameInput');
+  if(nameInput && nameInput.value !== state.me.name) nameInput.value = state.me.name;
+  document.getElementById('previewName').textContent = state.me.name || 'İsimsiz';
+  drawPreview();
+}
+function drawPreview(){
+  const c = document.getElementById('previewCanvas');
+  if(!previewCtx) previewCtx = c.getContext('2d');
+  previewCtx.clearRect(0,0,c.width,c.height);
+  drawCharacter(previewCtx, c.width/2, c.height/2 + 20, 2.1, {
+    colorIdx: state.me.color, suit: state.me.suit, hat: state.me.hat, visor: state.me.visor, name: state.me.name
+  }, {showName:false});
+}
+
+function showRoleScreen(){
+  const meRef = meP();
+  const nameEl = document.getElementById('roleNameText');
+  const descEl = document.getElementById('roleDescText');
+  if(meRef.isImpostor){
+    nameEl.textContent = 'IMPOSTOR';
+    nameEl.className = 'role-name imp';
+    descEl.textContent = 'Görevin: kimliğini gizle, mürettebatı fark ettirmeden birer birer etkisiz hale getir. Elektriği kesip kapıları kilitleyerek sabotaj yapabilir, sahte görev yaparak şüpheyi üzerinden atabilirsin. Ölürsen hayalet olarak dolaşmaya devam edersin.';
+  } else {
+    nameEl.textContent = 'CREWMATE';
+    nameEl.className = 'role-name crew';
+    descEl.textContent = 'Görevin: gemideki ' + TASKS_DEF.length + ' görevi tamamla ve içinizdeki impostor(lar)ı toplantılarda oylayarak dışarı at. Ölürsen hayalet olur, duvarlardan geçebilir ve görevlerine devam edebilirsin.';
+  }
+  showScreen('screen-role');
+}
+
+let canvas, ctx;
+function initGameScreen(){
+  canvas = document.getElementById('gameCanvas');
+  ctx = canvas.getContext('2d');
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+}
+
+function startWaitingRoomLoop(){
+  state.lastTs = performance.now();
+  state.waitRunId = (state.waitRunId||0) + 1;
+  const myRunId = state.waitRunId;
+  let timeLeft = 16;
+  showBotProfileCard(meP());
+  document.getElementById('roleChip').textContent = 'BEKLEME YERİ';
+  document.getElementById('roleChip').className = 'chip';
+  document.getElementById('taskChip').textContent = 'Oyun başlıyor: ' + timeLeft + 's';
+  document.getElementById('btnKill').style.display='none';
+  document.getElementById('btnSabLights').style.display='none';
+  document.getElementById('btnSabDoors').style.display='none';
+  document.getElementById('btnInteract').style.display='none';
+  const countdown = setInterval(()=>{
+    if(state.waitRunId !== myRunId){ clearInterval(countdown); return; }
+    timeLeft--;
+    document.getElementById('taskChip').textContent = 'Oyun başlıyor: ' + Math.max(timeLeft,0) + 's';
+    if(timeLeft<=0){
+      clearInterval(countdown);
+      state.inWaitingRoom = false;
+      state.players.forEach(pl=>{ pl.x = SPAWN.x + rand(-60,60); pl.y = SPAWN.y + rand(-40,40); pl.arrived = true; pl.target=null; pl.path=null; pl.workTimer=0; });
+      document.getElementById('btnInteract').style.display='block';
+      showRoleScreen();
+    }
+  }, 1000);
+  let elapsed = 0;
+  function waitTick(ts){
+    if(state.waitRunId !== myRunId) return;
+    const dt = Math.min(0.05, (ts - state.lastTs)/1000 || 0);
+    state.lastTs = ts;
+    elapsed += dt;
+    if(state.inWaitingRoom){
+      updatePlayer(dt);
+      updateBotsWander(dt, elapsed);
+      render();
+      requestAnimationFrame(waitTick);
+    }
+  }
+  requestAnimationFrame(waitTick);
+}
+function updateBotsWander(dt, elapsed){
+  for(const b of state.players){
+    if(!b.isBot) continue;
+    if(!b.arrived){
+      if(elapsed >= b.arriveAt){
+        b.arrived = true;
+        b.x = WAITING_SPAWN.x + rand(-40,40);
+        b.y = WAITING_SPAWN.y + rand(-30,30);
+        showBotProfileCard(b);
+      } else { continue; }
+    }
+    if(!b.target || !b.path){
+      b.target = {x: WAITING_SPAWN.x + rand(-220,220), y: WAITING_SPAWN.y + rand(-160,160)};
+      b.path = findPathTo(b.x, b.y, b.target.x, b.target.y);
+      b.pathIndex = 0;
+    }
+    const wp = b.path[b.pathIndex];
+    const ddx = wp.x-b.x, ddy = wp.y-b.y;
+    const dd = Math.hypot(ddx,ddy);
+    if(dd < 14){
+      b.pathIndex++;
+      if(b.pathIndex >= b.path.length){ b.target=null; b.path=null; }
+    } else {
+      const ux=ddx/dd, uy=ddy/dd;
+      b.x += ux*b.speed*dt; b.y += uy*b.speed*dt;
+      if(Math.abs(ux)>0.15) b.facing = ux<0?'left':'right';
+      b.walking = true; b.walkT = (b.walkT||0)+dt;
+    }
+  }
+}
+
+function startGameLoop(){
+  document.getElementById('roleChip').textContent = meP().isImpostor ? 'IMPOSTOR' : 'CREWMATE';
+  document.getElementById('roleChip').className = 'chip ' + (meP().isImpostor ? 'role-imp' : 'role-crew');
+  document.getElementById('btnKill').style.display = meP().isImpostor ? 'block' : 'none';
+  document.getElementById('btnSabLights').style.display = meP().isImpostor ? 'block' : 'none';
+  document.getElementById('btnSabDoors').style.display = meP().isImpostor ? 'block' : 'none';
+  updateTaskChip();
+  state.lastTs = performance.now();
+  state.gameRunId = (state.gameRunId||0) + 1;
+  const myGameRunId = state.gameRunId;
+  requestAnimationFrame((ts)=>gameTick(ts, myGameRunId));
+}
+
+function onPlayerDied(){
+  showToast('Öldürüldün! Artık bir hayaletsin — görevlere devam edebilir, herkesi izleyebilirsin.');
+  const chip = document.getElementById('roleChip');
+  if(chip && !chip.classList.contains('ghost-chip')){
+    chip.textContent += ' (HAYALET)';
+    chip.classList.add('ghost-chip');
+  }
+  document.getElementById('btnKill').style.display = 'none';
+  document.getElementById('btnSabLights').style.display = 'none';
+  document.getElementById('btnSabDoors').style.display = 'none';
+}
+
+function killPlayer(victim){
+  victim.alive = false;
+  state.bodies.push({x:victim.x, y:victim.y, ownerName:victim.name, ownerColorIdx:victim.colorIdx});
+  if(victim.id === 'me') onPlayerDied();
+}
+
+function updateTaskChip(){
+  const meRef = meP();
+  if(meRef && meRef.isImpostor){
+    document.getElementById('taskChip').textContent = 'Sahte Görevler';
+  } else {
+    const meRef2 = meP();
+    const done = meRef2.myTasks.filter(id=>meRef2.tasksDone[id]).length;
+    document.getElementById('taskChip').textContent = 'Görevler: ' + done + '/' + meRef2.myTasks.length;
+  }
+}
+
+const KEYMAP = {
+  'arrowup':'up','arrowdown':'down','arrowleft':'left','arrowright':'right',
+  'w':'up','s':'down','a':'left','d':'right'
+};
+window.addEventListener('keydown', (e)=>{
+  const k = KEYMAP[e.key.toLowerCase()];
+  if(k) state.keys[k] = true;
+  if(e.key.toLowerCase()==='e') tryInteract();
+  if(e.key.toLowerCase()==='f') tryKill();
+});
+window.addEventListener('keyup', (e)=>{
+  const k = KEYMAP[e.key.toLowerCase()];
+  if(k) state.keys[k] = false;
+});
+function wireDpad(){
+  document.querySelectorAll('.dpad button').forEach(btn=>{
+    const k = btn.getAttribute('data-k');
+    const on = (ev)=>{ ev.preventDefault(); state.keys[k]=true; };
+    const off = (ev)=>{ ev.preventDefault(); state.keys[k]=false; };
+    btn.addEventListener('pointerdown', on);
+    btn.addEventListener('pointerup', off);
+    btn.addEventListener('pointerleave', off);
+    btn.addEventListener('pointercancel', off);
+  });
+}
+
+function gameTick(ts, runId){
+  if(runId!==undefined && state.gameRunId !== runId) return;
+  const dt = Math.min(0.05, (ts - state.lastTs)/1000 || 0);
+  state.lastTs = ts;
+
+  if(!state.meetingOpen && !state.gameOver && !state.activeTask && !document.getElementById('overlayCameras').classList.contains('active')){
+    updatePlayer(dt);
+    updateBots(dt);
+    updateInteractPrompt();
+  }
+  if(document.getElementById('overlayCameras').classList.contains('active')){ renderCameraView(); }
+  if(state.killCooldown>0) state.killCooldown -= dt;
+  if(state.lightsCooldown>0) state.lightsCooldown -= dt;
+  if(state.doorsCooldown>0) state.doorsCooldown -= dt;
+  if(state.lightsOff && performance.now() > state.lightsOffUntil) state.lightsOff = false;
+  updateKillButton();
+  updateSabotageButtons();
+  updateLightsOverlay();
+
+  if(!state.gameOver && !state.meetingOpen){
+    checkWin();
+    if(state.gameOver) onGameOver();
+  }
+
+  render();
+  requestAnimationFrame((ts2)=>gameTick(ts2, runId));
+}
+
+function updatePlayer(dt){
+  const p = meP();
+  let dx=0, dy=0;
+  if(state.keys.up) dy -= 1;
+  if(state.keys.down) dy += 1;
+  if(state.keys.left) dx -= 1;
+  if(state.keys.right) dx += 1;
+  if(dx!==0 || dy!==0){
+    const len = Math.hypot(dx,dy);
+    dx/=len; dy/=len;
+    const spd = p.alive ? SPEED : SPEED*1.2;
+    const nx = p.x + dx*spd*dt;
+    const ny = p.y + dy*spd*dt;
+    if(p.alive){
+      if(isWalkable(nx, p.y, R)) p.x = nx;
+      if(isWalkable(p.x, ny, R)) p.y = ny;
+    } else {
+      p.x = nx; p.y = ny;
+    }
+    p.x = clamp(p.x, R, WORLD_W-R);
+    p.y = clamp(p.y, R, WORLD_H-R);
+    if(dx!==0) p.facing = dx<0 ? 'left' : 'right';
+    p.walking = true;
+    p.walkT = (p.walkT||0) + dt;
+  } else {
+    p.walking = false;
+  }
+}
+
+function assignBotTarget(b){
+  const shipRooms = ROOMS.filter(r=>r.key!=='waitingroom');
+  if(!b.isImpostor){
+    const undone = TASKS_DEF.filter(t=> b.myTasks.includes(t.id) && !b.tasksDone[t.id]);
+    if(undone.length && Math.random()<0.75){
+      const t = pick(undone);
+      b.target = {x:t.x, y:t.y, taskId:t.id};
+    } else {
+      const room = pick(shipRooms);
+      b.target = {x: rand(room.x+30, room.x+room.w-30), y: rand(room.y+30, room.y+room.h-30)};
+    }
+  } else {
+    const room = pick(shipRooms);
+    b.target = {x: rand(room.x+30, room.x+room.w-30), y: rand(room.y+30, room.y+room.h-30)};
+  }
+  b.path = findPathTo(b.x, b.y, b.target.x, b.target.y);
+  b.pathIndex = 0;
+}
+
+function updateBots(dt){
+  for(const b of state.players){
+    if(!b.isBot || !b.alive) continue;
+
+    if(b.workTimer > 0){
+      b.workTimer -= dt;
+      if(b.workTimer<=0){
+        if(b.target && b.target.taskId && b.myTasks.includes(b.target.taskId) && !b.tasksDone[b.target.taskId]){
+          b.tasksDone[b.target.taskId] = true;
+          if(b.id==='me') updateTaskChip();
+        }
+        b.target = null; b.path = null;
+      }
+    } else {
+      if(!b.target || !b.path){ assignBotTarget(b); }
+      const wp = b.path[b.pathIndex];
+      const ddx = wp.x-b.x, ddy = wp.y-b.y;
+      const dd = Math.hypot(ddx,ddy);
+      if(dd < 14){
+        b.pathIndex++;
+        if(b.pathIndex >= b.path.length){
+          if(b.target.taskId){ b.workTimer = rand(2.2,4); }
+          else { b.target = null; b.path = null; b.nextTurn = rand(0.4,1.2); }
+        }
+      } else {
+        const ux = ddx/dd, uy = ddy/dd;
+        const nx = b.x+ux*b.speed*dt, ny = b.y+uy*b.speed*dt;
+        let moved = false;
+        if(isWalkable(nx, ny, R)){ b.x=nx; b.y=ny; moved=true; }
+        else if(isWalkable(nx, b.y, R)){ b.x=nx; moved=true; }
+        else if(isWalkable(b.x, ny, R)){ b.y=ny; moved=true; }
+        if(!moved){ b.target = null; b.path = null; }
+        if(moved){
+          if(Math.abs(ux)>0.15) b.facing = ux<0 ? 'left' : 'right';
+          b.walking = true;
+          b.walkT = (b.walkT||0) + dt;
+        }
+      }
+    }
+    if(b.workTimer > 0 || (!b.target && !b.path)){ b.walking = false; }
+
+    if(b.isImpostor){
+      b.killCd -= dt;
+      if(b.killCd<=0){
+        const victims = state.players.filter(pl=>pl.alive && !pl.isImpostor);
+        if(victims.length>0){ killPlayer(pick(victims)); }
+        b.killCd = rand(16,30);
+      }
+      b.sabCd -= dt;
+      if(b.sabCd<=0){
+        if(Math.random()<0.5){
+          if(botSabotageLights(b)) b.sabCd = rand(28,55); else b.sabCd = rand(6,12);
+        } else {
+          if(botLockDoors(b)) b.sabCd = rand(28,55); else b.sabCd = rand(6,12);
+        }
+      }
+    }
+  }
+}
+
+function nearestInteractable(){
+  const p = meP();
+  const ghost = !p.alive;
+  let best = null, bestD = Infinity;
+  if(!ghost){
+    for(const body of state.bodies){
+      const d = dist(p.x,p.y, body.x, body.y);
+      if(d < 55 && d < bestD){ best = {type:'report', ref:body}; bestD = d; }
+    }
+    const de = dist(p.x,p.y, EMERGENCY.x, EMERGENCY.y);
+    if(de < 60 && de < bestD){ best = {type:'emergency'}; bestD = de; }
+    if(!p.isImpostor && state.lightsOff){
+      const dl = dist(p.x,p.y, LIGHTS_FIX.x, LIGHTS_FIX.y);
+      if(dl < 55 && dl < bestD){ best = {type:'fixlights'}; bestD = dl; }
+    }
+    const dc = dist(p.x,p.y, CAMERA_PANEL.x, CAMERA_PANEL.y);
+    if(dc < 55 && dc < bestD){ best = {type:'cameras'}; bestD = dc; }
+  }
+  for(const t of TASKS_DEF){
+    if(!p.myTasks.includes(t.id)) continue;
+    if(p.tasksDone[t.id] && !p.isImpostor) continue;
+    const d = dist(p.x,p.y, t.x, t.y);
+    if(d < 55 && d < bestD){ best = {type:'task', ref:t}; bestD = d; }
+  }
+  return best;
+}
+
+function updateInteractPrompt(){
+  const chip = document.getElementById('promptChip');
+  const btn = document.getElementById('btnInteract');
+  const it = nearestInteractable();
+  state.currentInteract = it;
+  if(it){
+    let label = '';
+    if(it.type==='emergency') label = 'Acil Toplantı Başlat';
+    else if(it.type==='report') label = it.ref.ownerName + " cesedini bildir";
+    else if(it.type==='fixlights') label = 'Işıkları Onar';
+    else if(it.type==='cameras') label = 'Kameraları İzle';
+    else if(it.type==='task') label = meP().isImpostor ? ('Sahte görev: ' + it.ref.label) : it.ref.label;
+    chip.textContent = 'E — ' + label;
+    chip.style.display = 'block';
+    btn.disabled = false; btn.classList.add('ready');
+  } else {
+    chip.style.display = 'none';
+    btn.disabled = true; btn.classList.remove('ready');
+  }
+  document.getElementById('roomNameChip').textContent = roomAt(meP().x, meP().y);
+}
+
+function updateKillButton(){
+  const btn = document.getElementById('btnKill');
+  const label = document.getElementById('killCdLabel');
+  const p = meP();
+  if(!p.isImpostor || !p.alive){ btn.style.display='none'; label.style.display='none'; return; }
+  btn.style.display='block';
+  const target = nearestKillTarget();
+  const ready = target && state.killCooldown<=0;
+  btn.disabled = !ready;
+  btn.classList.toggle('ready', !!ready);
+  btn.innerHTML = 'ÖLDÜR<br>(F)';
+  if(state.killCooldown>0){
+    label.style.display = 'block';
+    label.textContent = 'Öldürme için Kalan Süre: ' + Math.ceil(state.killCooldown);
+  } else {
+    label.style.display = 'none';
+  }
+}
+function nearestKillTarget(){
+  const p = meP();
+  let best=null, bestD=110;
+  for(const pl of state.players){
+    if(pl.id==='me' || pl.isImpostor || !pl.alive) continue;
+    const d = dist(p.x,p.y,pl.x,pl.y);
+    if(d<bestD){ best=pl; bestD=d; }
+  }
+  return best;
+}
+function tryKill(){
+  if(state.gameOver || state.meetingOpen || state.activeTask) return;
+  const p = meP();
+  if(!p.isImpostor || !p.alive || state.killCooldown>0) return;
+  const target = nearestKillTarget();
+  if(!target) return;
+  killPlayer(target);
+  state.killCooldown = state.killCooldownMax;
+  showToast(target.name + ' etkisiz hale getirildi.');
+}
+
+function tryInteract(){
+  if(state.gameOver || state.meetingOpen || state.activeTask) return;
+  const it = state.currentInteract;
+  if(!it) return;
+  if(it.type==='emergency'){ openMeeting('Acil Toplantı', null); }
+  else if(it.type==='report'){
+    const idx = state.bodies.indexOf(it.ref);
+    if(idx>=0) state.bodies.splice(idx,1);
+    openMeeting('Ceset Bulundu', it.ref.ownerName + ' cansız bulundu!');
+  } else if(it.type==='task'){ openTask(it.ref); }
+  else if(it.type==='fixlights'){ fixLights(); }
+  else if(it.type==='cameras'){ openCameras(); }
+}
+function openCameras(){
+  state.cameraIndex = 0;
+  document.getElementById('overlayCameras').classList.add('active');
+  renderCameraView();
+}
+function renderCameraView(){
+  const cam = CAMERAS[state.cameraIndex];
+  document.getElementById('cameraLabel').textContent = cam.label;
+  const canvasEl = document.getElementById('cameraCanvas');
+  const cctx = canvasEl.getContext('2d');
+  cctx.fillStyle = '#0A0F1E'; cctx.fillRect(0,0,canvasEl.width,canvasEl.height);
+  cctx.strokeStyle = '#3ED598'; cctx.lineWidth = 2;
+  cctx.strokeRect(2,2,canvasEl.width-4,canvasEl.height-4);
+  const scale = 0.35;
+  const ox = cam.x - canvasEl.width/(2*scale);
+  const oy = cam.y - canvasEl.height/(2*scale);
+  state.players.filter(p=>p.alive).forEach(p=>{
+    const px = (p.x-ox)*scale, py = (p.y-oy)*scale;
+    if(px<0||px>canvasEl.width||py<0||py>canvasEl.height) return;
+    cctx.fillStyle = COLORS[p.colorIdx].hex;
+    cctx.beginPath(); cctx.arc(px,py,6,0,Math.PI*2); cctx.fill();
+  });
+}
+
+function updateSabotageButtons(){
+  const btnL = document.getElementById('btnSabLights');
+  const btnD = document.getElementById('btnSabDoors');
+  const p = meP();
+  const show = p.isImpostor && p.alive;
+  btnL.style.display = show ? 'block' : 'none';
+  btnD.style.display = show ? 'block' : 'none';
+  if(!show) return;
+  const readyL = state.lightsCooldown<=0 && !state.lightsOff;
+  btnL.disabled = !readyL;
+  btnL.classList.toggle('ready', readyL);
+  btnL.innerHTML = state.lightsOff ? 'AKTİF' : (state.lightsCooldown>0 ? Math.ceil(state.lightsCooldown)+'s' : 'IŞIK<br>KES');
+  const readyD = state.doorsCooldown<=0;
+  btnD.disabled = !readyD;
+  btnD.classList.toggle('ready', readyD);
+  btnD.innerHTML = state.doorsCooldown>0 ? Math.ceil(state.doorsCooldown)+'s' : 'KAPI<br>KİLİT';
+}
+function sabotageLightsGeneric(){
+  if(state.lightsCooldown>0 || state.lightsOff) return false;
+  state.lightsOff = true;
+  state.lightsOffUntil = performance.now() + 35000;
+  state.lightsCooldown = state.lightsCooldownMax;
+  return true;
+}
+function lockDoorsGeneric(roomKey, roomLabel){
+  if(state.doorsCooldown>0) return false;
+  const idxs = ROOM_CORRIDORS[roomKey] || [];
+  const until = performance.now() + 12000;
+  idxs.forEach(i=>{ state.doorLocks[i] = until; });
+  state.doorsCooldown = state.doorsCooldownMax;
+  return true;
+}
+function botSabotageLights(bot){
+  if(sabotageLightsGeneric()){ showToast('Elektrik kesildi! Işıklar gitti.'); return true; }
+  return false;
+}
+function botLockDoors(bot){
+  const r = pick(ROOMS);
+  if(lockDoorsGeneric(r.key, r.label)){ showToast(r.label + ' kapıları kilitlendi!'); return true; }
+  return false;
+}
+function sabotageLights(){
+  const p = meP();
+  if(!p.isImpostor || !p.alive) return;
+  if(sabotageLightsGeneric()) showToast('Elektrik kesildi! Mürettebatın görüşü daraldı.');
+}
+function fixLights(){
+  state.lightsOff = false;
+  showToast('Işıklar onarıldı.');
+}
+function updateLightsOverlay(){
+  const overlay = document.getElementById('lightsOverlay');
+  const p = meP();
+  const showDark = state.lightsOff && p.alive && !p.isImpostor;
+  overlay.classList.toggle('active', showDark);
+}
+function openDoorPicker(){
+  const p = meP();
+  if(!p.isImpostor || !p.alive || state.doorsCooldown>0) return;
+  const list = document.getElementById('roomPickList');
+  list.innerHTML = '';
+  ROOMS.forEach(r=>{
+    const b = document.createElement('div');
+    b.className = 'pill';
+    b.textContent = r.label;
+    b.addEventListener('click', ()=>{
+      lockDoors(r.key, r.label);
+      document.getElementById('overlayDoorPick').classList.remove('active');
+    });
+    list.appendChild(b);
+  });
+  document.getElementById('overlayDoorPick').classList.add('active');
+}
+function lockDoors(roomKey, roomLabel){
+  const p = meP();
+  if(!p.isImpostor || !p.alive) return;
+  if(lockDoorsGeneric(roomKey, roomLabel)) showToast(roomLabel + ' kapıları 12 saniyeliğine kilitlendi.');
+}
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id==='btnInteract') tryInteract();
+  if(e.target && (e.target.id==='btnKill' || e.target.closest('#btnKill'))) tryKill();
+});
+
+function openTask(taskDef){
+  state.activeTask = taskDef;
+  document.getElementById('taskTitle').textContent = taskDef.label;
+  document.getElementById('taskSub').textContent = meP().isImpostor
+    ? 'Şüphe çekmemek için görevi yapıyormuş gibi yap.'
+    : 'Görevi tamamlamak için aşağıdaki adımı bitir.';
+  const clicksWrap = document.getElementById('taskClicksWrap');
+  const holdWrap = document.getElementById('taskHoldWrap');
+  if(taskDef.type==='clicks'){
+    clicksWrap.style.display='block'; holdWrap.style.display='none';
+    let count = 0;
+    const need = taskDef.need || 6;
+    document.getElementById('clickCount').textContent = count+' / '+need;
+    const btn = document.getElementById('btnClickTask');
+    const handler = ()=>{
+      count++;
+      document.getElementById('clickCount').textContent = count+' / '+need;
+      if(count>=need){ btn.removeEventListener('click', handler); completeTask(taskDef); }
+    };
+    btn._handler = handler;
+    btn.addEventListener('click', handler);
+  } else {
+    clicksWrap.style.display='none'; holdWrap.style.display='block';
+    const bar = document.getElementById('holdBar');
+    let progress = 0; bar.style.width='0%';
+    let holding = false;
+    const btn = document.getElementById('btnHoldTask');
+    function step(){
+      if(!state.activeTask) return;
+      if(holding) progress += 1.6; else progress -= 0.8;
+      progress = clamp(progress,0,100);
+      bar.style.width = progress+'%';
+      if(progress>=100){ cleanup(); completeTask(taskDef); return; }
+      btn._raf = requestAnimationFrame(step);
+    }
+    function down(ev){ ev.preventDefault(); holding = true; }
+    function up(ev){ holding = false; }
+    function cleanup(){
+      btn.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointerup', up);
+      if(btn._raf) cancelAnimationFrame(btn._raf);
+    }
+    btn.addEventListener('pointerdown', down);
+    window.addEventListener('pointerup', up);
+    btn._cleanup = cleanup;
+    btn._raf = requestAnimationFrame(step);
+  }
+  document.getElementById('overlayTask').classList.add('active');
+}
+function closeTaskOverlay(){
+  const btn = document.getElementById('btnClickTask');
+  const btn2 = document.getElementById('btnHoldTask');
+  if(btn._handler){ btn.removeEventListener('click', btn._handler); btn._handler=null; }
+  if(btn2._cleanup){ btn2._cleanup(); btn2._cleanup=null; }
+  document.getElementById('overlayTask').classList.remove('active');
+  state.activeTask = null;
+}
+function completeTask(taskDef){
+  const meRef = meP();
+  if(!meRef.isImpostor){
+    meRef.tasksDone[taskDef.id] = true;
+    updateTaskChip();
+    showToast('Görev tamamlandı: ' + taskDef.label);
+  } else {
+    showToast('Sahte görev tamamlandı.');
+  }
+  closeTaskOverlay();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('btnTaskCancel').addEventListener('click', closeTaskOverlay);
+});
+
+function openMeeting(title, subDesc){
+  state.meetingOpen = true;
+  state.meetingVote = undefined;
+  state.meetingVotesCast = {};
+  state.meetingBotVoted = new Set();
+  document.getElementById('meetingTitle').textContent = title;
+  const log = document.getElementById('meetingChatLog');
+  log.innerHTML = '';
+  if(subDesc) addChatLine(null, subDesc, true);
+  renderVoteList();
+  startMeetingTimer();
+  scheduleBotVotes();
+  scheduleBotChat();
+  document.getElementById('overlayMeeting').classList.add('active');
+}
+function addChatLine(sender, text, isSystem){
+  const log = document.getElementById('meetingChatLog');
+  const line = document.createElement('div');
+  line.className = 'chat-line';
+  if(isSystem){
+    line.innerHTML = '<span style="color:var(--accent); font-weight:700;">⚠ '+text+'</span>';
+  } else {
+    const color = COLORS[sender.colorIdx].hex;
+    line.innerHTML = '<span class="who" style="color:'+color+';">'+sender.name+':</span>'+text;
+  }
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+const BOT_ARRIVE_LINES = ['selam!', 'merhaba, geldim', 'buradayım', 'oyuna hazırım', 'naber millet', 'geciktim mi?', 'hazırız o zaman', 'hey herkese selam'];
+function showBotProfileCard(b){
+  const card = document.getElementById('profileCard');
+  const line = pick(BOT_ARRIVE_LINES);
+  card.innerHTML = '<canvas id="pcCanvas" width="56" height="56"></canvas><div class="pc-text"><div class="pc-name"></div><div class="pc-line"></div></div>';
+  card.querySelector('.pc-name').textContent = b.name;
+  card.querySelector('.pc-line').textContent = '"' + line + '"';
+  card.style.display = 'flex';
+  const c = document.getElementById('pcCanvas');
+  const cctx = c.getContext('2d');
+  drawCharacter(cctx, 28, 40, 0.85, b, {showName:false});
+  clearTimeout(showBotProfileCard._h);
+  showBotProfileCard._h = setTimeout(()=>{ card.style.display='none'; }, 3200);
+}
+const BOT_ACCUSE_LINES = [
+  'bence {name} impostor',
+  '{name} çok şüpheli davranıyordu',
+  '{name} nerede olduğunu söylesin',
+  'ben görevimi yaptım, {name} ne yaptı?',
+  '{name} ile aynı odadaydım, tuhaf davrandı',
+  'kimse {name}\'i görmedi değil mi?',
+  '{name} beni öldürmeye çalıştı sanki',
+  'emin değilim ama {name} olabilir',
+];
+const BOT_DEFEND_LINES = ['ben yapmadım', 'görevimi yapıyordum', 'suçsuzum', 'kanıt yok ki', 'bunu kanıtlayamazsınız'];
+function scheduleBotChat(){
+  (state.meetingChatTimers||[]).forEach(clearTimeout);
+  const alivePlayers = state.players.filter(p=>p.alive);
+  const botChatters = alivePlayers.filter(p=>p.isBot);
+  state.meetingChatTimers = botChatters.filter(()=>Math.random()<0.7).map(bot=>{
+    const delayMs = rand(1500, 15000);
+    return setTimeout(()=>{
+      if(!state.meetingOpen) return;
+      const others = alivePlayers.filter(p=>p.id!==bot.id);
+      let text;
+      if(Math.random()<0.6 && others.length){
+        text = pick(BOT_ACCUSE_LINES).replace('{name}', pick(others).name);
+      } else {
+        text = pick(BOT_DEFEND_LINES);
+      }
+      addChatLine(bot, text, false);
+    }, delayMs);
+  });
+}
+function scheduleBotVotes(){
+  (state.meetingBotTimers||[]).forEach(clearTimeout);
+  const alivePlayers = state.players.filter(p=>p.alive);
+  const botVoters = alivePlayers.filter(p=>p.isBot);
+  state.meetingBotTimers = botVoters.map(bot=>{
+    const delayMs = rand(4000, 17000);
+    return setTimeout(()=>{ castBotVote(bot); }, delayMs);
+  });
+}
+function castBotVote(bot){
+  if(!state.meetingOpen || !bot.alive) return;
+  const alivePlayers = state.players.filter(p=>p.alive);
+  let targetId = null;
+  const roll = Math.random();
+  if(bot.isImpostor){
+    const crewTargets = alivePlayers.filter(x=>!x.isImpostor);
+    if(roll < 0.75 && crewTargets.length){ targetId = pick(crewTargets).id; }
+  } else {
+    if(roll < 0.8){
+      const targets = alivePlayers.filter(x=>x.id!==bot.id);
+      if(targets.length) targetId = pick(targets).id;
+    }
+  }
+  state.meetingVotesCast[bot.id] = targetId;
+  state.meetingBotVoted.add(bot.id);
+  renderVoteList();
+}
+function renderVoteList(){
+  const list = document.getElementById('voteList');
+  list.innerHTML = '';
+  const alivePlayers = state.players.filter(p=>p.alive);
+  alivePlayers.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'vote-row';
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = COLORS[p.colorIdx].hex;
+    const nm = document.createElement('div');
+    nm.className = 'nm';
+    nm.textContent = p.name + (p.id==='me' ? ' (Sen)' : '');
+    row.appendChild(dot); row.appendChild(nm);
+    if(p.id !== 'me'){
+      if(state.meetingBotVoted && state.meetingBotVoted.has(p.id)){
+        const tag = document.createElement('span');
+        tag.className = 'dead-tag';
+        tag.textContent = 'oy kullandı';
+        row.appendChild(tag);
+      }
+      const btn = document.createElement('button');
+      btn.textContent = state.meetingVote===p.id ? 'OY VERDİN' : 'OY VER';
+      if(state.meetingVote===p.id) btn.classList.add('chosen');
+      btn.addEventListener('click', ()=>{ state.meetingVote = p.id; renderVoteList(); });
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  });
+  const skipBtn = document.getElementById('btnSkipVote');
+  skipBtn.classList.toggle('chosen', state.meetingVote===null);
+  skipBtn.textContent = state.meetingVote===null ? 'OYU GEÇTİN' : 'OYU GEÇ';
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('btnSkipVote').addEventListener('click', ()=>{
+    state.meetingVote = null;
+    renderVoteList();
+  });
+  function sendChat(){
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text || !state.meetingOpen) return;
+    addChatLine(meP(), text, false);
+    input.value = '';
+  }
+  document.getElementById('btnChatSend').addEventListener('click', sendChat);
+  document.getElementById('chatInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter') sendChat();
+  });
+});
+function startMeetingTimer(){
+  let t = 30;
+  const timerEl = document.getElementById('meetingTimer');
+  timerEl.textContent = t;
+  clearInterval(meetingInterval);
+  meetingInterval = setInterval(()=>{
+    t -= 1;
+    timerEl.textContent = Math.max(t,0);
+    if(t<=0){
+      clearInterval(meetingInterval);
+      finalizeMeeting();
+    }
+  }, 1000);
+}
+function finalizeMeeting(){
+  (state.meetingBotTimers||[]).forEach(clearTimeout);
+  state.meetingBotTimers = [];
+  (state.meetingChatTimers||[]).forEach(clearTimeout);
+  state.meetingChatTimers = [];
+  document.getElementById('overlayMeeting').classList.remove('active');
+  const alivePlayers = state.players.filter(p=>p.alive);
+  const tally = {};
+  const registerVote = (id)=>{ if(id) tally[id] = (tally[id]||0)+1; };
+  registerVote(state.meetingVote);
+  alivePlayers.forEach(p=>{
+    if(p.id==='me') return;
+    let targetId = state.meetingVotesCast[p.id];
+    if(targetId === undefined){
+      const roll = Math.random();
+      if(p.isImpostor){
+        const crewTargets = alivePlayers.filter(x=>!x.isImpostor);
+        targetId = (roll < 0.75 && crewTargets.length) ? pick(crewTargets).id : null;
+      } else {
+        const targets = alivePlayers.filter(x=>x.id!==p.id);
+        targetId = (roll < 0.8 && targets.length) ? pick(targets).id : null;
+      }
+    }
+    registerVote(targetId);
+  });
+  let ejectedId = null, max = 0, tie=false;
+  Object.keys(tally).forEach(id=>{
+    if(tally[id] > max){ max = tally[id]; ejectedId = id; tie=false; }
+    else if(tally[id] === max){ tie = true; }
+  });
+  if(tie) ejectedId = null;
+
+  const resultTitle = document.getElementById('resultTitle');
+  const resultDesc = document.getElementById('resultDesc');
+  if(!ejectedId){
+    resultTitle.textContent = 'Kimse Atılmadı';
+    resultDesc.textContent = 'Oylar dağıldı, kimse gemiden atılmadı.';
+  } else {
+    const ejected = state.players.find(p=>p.id===ejectedId);
+    ejected.alive = false;
+    if(ejected.id==='me') onPlayerDied();
+    resultTitle.textContent = ejected.name + ' Atıldı';
+    resultDesc.textContent = ejected.name + ' bir ' + (ejected.isImpostor ? 'IMPOSTOR' : 'CREWMATE') + ' idi.';
+  }
+  document.getElementById('overlayResult').classList.add('active');
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('btnResultContinue').addEventListener('click', ()=>{
+    document.getElementById('overlayResult').classList.remove('active');
+    state.meetingOpen = false;
+    checkWin();
+    if(state.gameOver) onGameOver();
+  });
+});
+
+function onGameOver(){
+  const title = document.getElementById('endTitle');
+  const desc = document.getElementById('endDesc');
+  const meRef = meP();
+  if(state.gameOver==='crew' || state.gameOver==='crew-tasks'){
+    const win = !meRef.isImpostor;
+    title.textContent = win ? 'MÜRETTEBAT KAZANDI' : 'MÜRETTEBAT KAZANDI';
+    title.className = 'end-title ' + (win?'win':'lose');
+    desc.textContent = state.gameOver==='crew-tasks'
+      ? 'Tüm görevler tamamlandı. ' + (win ? 'Kazandın!' : 'Impostor olarak kaybettin.')
+      : 'Tüm impostorlar gemiden atıldı. ' + (win ? 'Kazandın!' : 'Impostor olarak kaybettin.');
+  } else if(state.gameOver==='impostor'){
+    const win = meRef.isImpostor;
+    title.textContent = 'IMPOSTOR KAZANDI';
+    title.className = 'end-title ' + (win?'win':'lose');
+    desc.textContent = win ? 'Mürettebatı alt ettin. Kazandın!' : 'Impostor(lar) mürettebatı geride bıraktı. Kaybettin.';
+  }
+  setTimeout(()=>{ document.getElementById('overlayEnd').classList.add('active'); }, 350);
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('btnEndMenu').addEventListener('click', ()=>{
+    document.getElementById('overlayEnd').classList.remove('active');
+    showScreen('screen-start');
+  });
+});
+
+function render(){
+  if(!ctx) return;
+  const p = meP();
+  const cw = canvas.width, chh = canvas.height;
+  state.camera.x = clamp(p.x - cw/2, 0, Math.max(0, WORLD_W - cw));
+  state.camera.y = clamp(p.y - chh/2, 0, Math.max(0, WORLD_H - chh));
+
+  ctx.fillStyle = '#04060c';
+  ctx.fillRect(0,0,cw,chh);
+
+  ctx.save();
+  ctx.translate(-state.camera.x, -state.camera.y);
+
+  drawSpaceStars();
+
+  CORRIDORS.forEach((c,idx)=>{
+    const locked = state.doorLocks[idx] && state.doorLocks[idx] > performance.now();
+    ctx.fillStyle = locked ? '#3A1420' : '#151F38';
+    ctx.fillRect(c.x,c.y,c.w,c.h);
+    if(locked){
+      ctx.strokeStyle = '#E6484B'; ctx.lineWidth = 3;
+      ctx.strokeRect(c.x+3,c.y+3,c.w-6,c.h-6);
+    }
+  });
+
+  ROOMS.forEach(r=>{
+    ctx.fillStyle = '#1A2740';
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+    ctx.strokeStyle = '#2E3F66';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(r.x, r.y, r.w, r.h);
+  });
+
+  ctx.beginPath();
+  ctx.arc(EMERGENCY.x, EMERGENCY.y, 26, 0, Math.PI*2);
+  ctx.fillStyle = '#C11F1F';
+  ctx.fill();
+  ctx.strokeStyle = '#7a0f0f'; ctx.lineWidth=4; ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='900 18px Orbitron, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('!', EMERGENCY.x, EMERGENCY.y+7);
+
+  ctx.save();
+  ctx.translate(LIGHTS_FIX.x, LIGHTS_FIX.y);
+  ctx.fillStyle = state.lightsOff ? '#E6484B' : '#3A4568';
+  roundRectPath(ctx,-16,-14,32,28,6); ctx.fill();
+  ctx.strokeStyle = state.lightsOff ? '#ffb3b3' : '#5C6E96'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font='900 16px Rubik, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('⚡', 0, 6);
+  ctx.restore();
+  if(state.lightsOff){
+    ctx.fillStyle = '#FFB3B3'; ctx.font='600 12px Rubik, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Işıkları Onar', LIGHTS_FIX.x, LIGHTS_FIX.y+34);
+  }
+
+  ctx.save();
+  ctx.translate(CAMERA_PANEL.x, CAMERA_PANEL.y);
+  ctx.fillStyle = '#3A4568';
+  roundRectPath(ctx,-18,-14,36,28,6); ctx.fill();
+  ctx.strokeStyle = '#5EC8F2'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font='900 14px Rubik, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('📹', 0, 6);
+  ctx.restore();
+  ctx.fillStyle = '#B7C6E8'; ctx.font='600 12px Rubik, sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Kameralar', CAMERA_PANEL.x, CAMERA_PANEL.y+34);
+
+  CAMERAS.forEach(c=>{
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.fillStyle = '#5EC8F2';
+    ctx.beginPath(); ctx.arc(0,0,6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  TASKS_DEF.forEach(t=>{
+    if(!p.myTasks.includes(t.id)) return;
+    const done = p.tasksDone[t.id];
+    if(done && !p.isImpostor) return;
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    ctx.fillStyle = done ? '#3ED598' : '#FFC857';
+    ctx.beginPath();
+    ctx.moveTo(0,-14); ctx.lineTo(12,10); ctx.lineTo(-12,10); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#251A02';
+    ctx.font='900 14px Rubik, sans-serif'; ctx.textAlign='center';
+    ctx.fillText('!', 0, 6);
+    ctx.restore();
+    ctx.fillStyle = '#C7D2EA'; ctx.font='600 12px Rubik, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(t.label, t.x, t.y+28);
+  });
+
+  state.bodies.forEach(b=>{
+    ctx.save();
+    ctx.translate(b.x,b.y);
+    ctx.fillStyle = COLORS[b.ownerColorIdx].hex;
+    ctx.beginPath(); ctx.ellipse(0,0,16,10,0.3,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle = '#0007';
+    ctx.beginPath(); ctx.arc(-8,-2,3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(2,4,3,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  const renderList = state.players.filter(pl=>pl.alive && pl.arrived!==false);
+  if(!p.alive) renderList.push(p);
+  renderList.sort((a,b)=>a.y-b.y);
+  renderList.forEach(pl=>{
+    const isGhost = !pl.alive;
+    if(isGhost){ ctx.save(); ctx.globalAlpha = 0.45; }
+    drawCharacter(ctx, pl.x, pl.y, 1, pl, {showName:true, facing: pl.facing||'right', walking: pl.walking, walkT: pl.walkT||0});
+    if(isGhost){ ctx.restore(); }
+  });
+
+  ctx.restore();
+}
+
+let spaceStars = null;
+function drawSpaceStars(){
+  if(!spaceStars){
+    spaceStars = [];
+    for(let i=0;i<220;i++){
+      spaceStars.push({x:Math.random()*WORLD_W, y:Math.random()*WORLD_H, r:Math.random()*1.4+0.3});
+    }
+  }
+  ctx.fillStyle = '#0A0F1E';
+  ctx.fillRect(0,0,WORLD_W,WORLD_H);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  spaceStars.forEach(s=>{
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  });
+}
+
+function refreshCheatUI(){
+  buildPills('pillsCheatRole', ['Yok','Impostor Olma','Crewmate Olma'], 
+    state.cheat.forceRole==='impostor'?'Impostor Olma': state.cheat.forceRole==='crewmate'?'Crewmate Olma':'Yok',
+    (v)=>{
+      state.cheat.forceRole = v==='Impostor Olma' ? 'impostor' : v==='Crewmate Olma' ? 'crewmate' : null;
+      refreshCheatUI();
+    });
+  buildPills('pillsCheatReveal', [state.cheat.revealRoles ? 'Rolleri Gizle' : 'Herkesin Rolünü Göster'],
+    null,
+    ()=>{
+      state.cheat.revealRoles = !state.cheat.revealRoles;
+      refreshCheatUI();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  initStars('starsStart'); initStars('starsLobby'); initStars('starsWait'); initStars('starsRole');
+  initStars('starsHowto'); initStars('starsCodes'); initStars('starsCheat');
+  refreshLobbyUI();
+  refreshCustomizeUI();
+  refreshCheatUI();
+  initGameScreen();
+  wireDpad();
+
+  document.getElementById('btn-new-game').addEventListener('click', ()=>{
+    showScreen('screen-modeselect');
+  });
+  document.getElementById('btn-modeselect-back').addEventListener('click', ()=>{
+    showScreen('screen-start');
+  });
+  document.getElementById('btn-mode-single').addEventListener('click', ()=>{
+    showScreen('screen-lobby');
+  });
+  document.getElementById('btn-mode-multi').addEventListener('click', ()=>{
+    showToast('Çok oyunculu yakında gelecek!');
+  });
+  document.getElementById('btn-how-to-play').addEventListener('click', ()=>{
+    showScreen('screen-howto');
+  });
+  document.getElementById('btn-howto-back').addEventListener('click', ()=>{
+    showScreen('screen-start');
+  });
+  document.getElementById('btn-codes').addEventListener('click', ()=>{
+    document.getElementById('codeInput').value = '';
+    showScreen('screen-codes');
+  });
+  document.getElementById('btn-codes-back').addEventListener('click', ()=>{
+    showScreen('screen-start');
+  });
+  document.getElementById('btn-codes-submit').addEventListener('click', ()=>{
+    const val = document.getElementById('codeInput').value.trim().toUpperCase();
+    if(val === 'A1BC3'){
+      refreshCheatUI();
+      showScreen('screen-cheat');
+    } else {
+      showScreen('screen-start');
+    }
+  });
+  document.getElementById('btn-cheat-back').addEventListener('click', ()=>{
+    showScreen('screen-start');
+  });
+  document.getElementById('btn-lobby-back').addEventListener('click', ()=>{
+    showScreen('screen-start');
+  });
+  document.getElementById('btn-lobby-join').addEventListener('click', ()=>{
+    showScreen('screen-waiting');
+    refreshCustomizeUI();
+  });
+  document.getElementById('btn-wait-back').addEventListener('click', ()=>{
+    showScreen('screen-lobby');
+  });
+  document.getElementById('btn-wait-start').addEventListener('click', ()=>{
+    state.gameRunId = (state.gameRunId||0) + 1;
+    buildPlayers();
+    state.inWaitingRoom = true;
+    showScreen('screen-game');
+    startWaitingRoomLoop();
+  });
+  document.getElementById('btn-role-continue').addEventListener('click', ()=>{
+    showScreen('screen-game');
+    startGameLoop();
+  });
+  document.getElementById('btnSabLights').addEventListener('click', sabotageLights);
+  document.getElementById('btnSabDoors').addEventListener('click', openDoorPicker);
+  document.getElementById('btnCamPrev').addEventListener('click', ()=>{
+    state.cameraIndex = (state.cameraIndex - 1 + CAMERAS.length) % CAMERAS.length;
+    renderCameraView();
+  });
+  document.getElementById('btnCamNext').addEventListener('click', ()=>{
+    state.cameraIndex = (state.cameraIndex + 1) % CAMERAS.length;
+    renderCameraView();
+  });
+  document.getElementById('btnCamClose').addEventListener('click', ()=>{
+    document.getElementById('overlayCameras').classList.remove('active');
+  });
+  document.getElementById('btnDoorPickCancel').addEventListener('click', ()=>{
+    document.getElementById('overlayDoorPick').classList.remove('active');
+  });
+  const nameInput = document.getElementById('nameInput');
+  nameInput.addEventListener('input', ()=>{
+    state.me.name = nameInput.value.slice(0,18);
+    document.getElementById('previewName').textContent = state.me.name.trim() || 'İsimsiz';
+    drawPreview();
+  });
+  nameInput.addEventListener('blur', ()=>{
+    if(!nameInput.value.trim()){ state.me.name = pick(NAME_POOL); refreshCustomizeUI(); }
+  });
+});
+
+})();
+
+</script>
+</body>
+</html>
